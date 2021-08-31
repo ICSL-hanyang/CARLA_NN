@@ -935,25 +935,32 @@ class CameraManager(object):
             self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
         if self.recording:
 
+            # Skip 0th image
             if self.recording_frame_num == 0:
-                self.record_time = str(datetime.datetime.now())
-                self.recording_frame_num += 1
-                self.prev_img = None
-                self.current_img = image
+                self.record_time = str(datetime.datetime.now())     # Save the time and date when the recording starts
+                self.recording_frame_num += 1   # Increment record data index
+                self.prev_img = None            # Initialize prev image as None
+                self.current_img = image        # Initialize current image
                 print('0th Frame Skip')
 
+            # Start recording camera images after 0th index
             else:
-                self.prev_img = self.current_img
+                # Save prev image as the current image at the previous step
+                # Save record date, frame num, simulation timestamp in the image save path
+                self.prev_img = self.current_img    
                 self.prev_img.save_to_disk('./Recorded_Image/{}_{}_t0_{}.png'.format(self.record_time, self.recording_frame_num, self.prev_img.timestamp))
 
+                # Save current image as camera image at the current step
+                # Save record date, frame num, simulation timestamp in the image save path
                 self.current_img = image
                 self.current_img.save_to_disk('./Recorded_Image/{}_{}_t1_{}.png'.format(self.record_time, self.recording_frame_num, self.current_img.timestamp))
                 
+                # Compute the delta time between prev image and current image from their timestamp
                 deltaTime_seconds = self.current_img.timestamp - self.prev_img.timestamp
 
                 print('Record Time : {} : {} : {} | Delta Time : {} sec --- {}'.format(self.record_time, self.recording_frame_num, self.prev_img.timestamp, deltaTime_seconds, type(image)))
                 
-                self.recording_frame_num += 1
+                self.recording_frame_num += 1   # Increment record data index
 
 # ==============================================================================
 # -- Game Loop ---------------------------------------------------------
