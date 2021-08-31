@@ -100,6 +100,12 @@ from agents.navigation.basic_agent import BasicAgent  # pylint: disable=import-e
 
 
 # ==============================================================================
+# -- Custom Import for Data Collection -----------------------------------------
+# ==============================================================================
+import datetime
+
+
+# ==============================================================================
 # -- Global functions ----------------------------------------------------------
 # ==============================================================================
 
@@ -819,6 +825,12 @@ class CameraManager(object):
         self._parent = parent_actor
         self.hud = hud
         self.recording = False
+
+        self.record_time = None
+        self.recording_frame_num = 0
+        self.prev_img = None
+        self.current_img = None
+
         bound_y = 0.5 + self._parent.bounding_box.extent.y
         attachment = carla.AttachmentType
         self._camera_transforms = [
@@ -922,7 +934,26 @@ class CameraManager(object):
             array = array[:, :, ::-1]
             self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
         if self.recording:
-            image.save_to_disk('_out/%08d' % image.frame)
+
+            if self.recording_frame_num == 0:
+                self.record_time = str(datetime.datetime.now())
+                self.recording_frame_num += 1
+                self.prev_img = None
+                self.current_img = image
+                print('0th Frame Skip')
+
+            else:
+                self.prev_img = self.current_img
+                self.prev_img.save_to_disk('./Recorded_Image/{}_{}_t0_{}.png'.format(self.record_time, self.recording_frame_num, self.prev_img.timestamp))
+
+                self.current_img = image
+                self.current_img.save_to_disk('./Recorded_Image/{}_{}_t1_{}.png'.format(self.record_time, self.recording_frame_num, self.current_img.timestamp))
+                
+                deltaTime_seconds = self.current_img.timestamp - self.prev_img.timestamp
+
+                print('Record Time : {} : {} : {} | Delta Time : {} sec --- {}'.format(self.record_time, self.recording_frame_num, self.prev_img.timestamp, deltaTime_seconds, type(image)))
+                
+                self.recording_frame_num += 1
 
 # ==============================================================================
 # -- Game Loop ---------------------------------------------------------
