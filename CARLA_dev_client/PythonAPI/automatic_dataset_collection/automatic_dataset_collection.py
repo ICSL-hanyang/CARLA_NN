@@ -1017,6 +1017,22 @@ def game_loop(args):
 
         clock = pygame.time.Clock()
 
+
+
+        recording_frame_num = 0
+        record_init_flag = True
+
+        timestamp_list = []
+        HUD_info_list = []
+
+        prev_img = None
+        prev_hud_data = None
+
+        current_img = None
+        current_hud_data = None
+
+
+
         while True:
             clock.tick()
             if args.sync:
@@ -1029,6 +1045,71 @@ def game_loop(args):
             world.tick(clock)
             world.render(display)
             pygame.display.flip()
+
+
+
+
+            timestamp_list.append(world.hud.simulation_time)
+            HUD_info_list.append(world.hud._info_text)
+
+            if world.camera_manager.recording == True:
+
+                if record_init_flag == True:
+
+                    ### Prev ###########################################################
+                    prev_img = None
+                    prev_hud_data = None
+
+                    ### Current ########################################################
+                    current_img = world.camera_manager.current_img
+                    current_img_timestamp = current_img.timestamp
+
+                    if current_img_timestamp in timestamp_list:
+
+                        match_HUD_idx = timestamp_list.index(current_img_timestamp)
+
+                        current_img_hud_data = HUD_info_list[match_HUD_idx]
+
+                        recording_frame_num += 1
+                        record_init_flag = False
+
+                    else:
+                        print('0th Index : No Timestamp Match - Skip / Return to Record Init Point')
+                        record_init_flag = True
+
+                else:
+
+                    ### Prev ###########################################################
+                    prev_img = current_img
+                    prev_hud_data = current_img_hud_data
+
+                    print('prev Img Timestamp : {}'.format(prev_img.timestamp))
+                    print('prev HUD Data : {}'.format(prev_hud_data))
+                    
+                    ### Current ########################################################
+                    current_img = world.camera_manager.current_img
+                    current_img_timestamp = current_img.timestamp
+
+                    if current_img_timestamp in timestamp_list:
+
+                        match_HUD_idx = timestamp_list.index(current_img_timestamp)
+
+                        current_img_hud_data = HUD_info_list[match_HUD_idx]
+
+                        print('current Img Timestamp : {}'.format(current_img.timestamp))
+                        print('current HUD Data : {}'.format(current_img_hud_data))
+
+                        recording_frame_num += 1
+                        record_init_flag = False
+
+                    else:
+                        print('No Timestamp Match - Skip / Return to Record Init Point')
+                        record_init_flag = True
+    
+                print('---------------------------------')
+
+
+
 
             if agent.done():
                 if args.loop:
