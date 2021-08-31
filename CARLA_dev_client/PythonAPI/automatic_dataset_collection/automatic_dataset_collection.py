@@ -928,6 +928,9 @@ class CameraManager(object):
             self.surface = pygame.surfarray.make_surface(lidar_img)
         else:
             image.convert(self.sensors[self.index][1])
+
+            self.current_img = image
+
             array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
             array = np.reshape(array, (image.height, image.width, 4))
             array = array[:, :, :3]
