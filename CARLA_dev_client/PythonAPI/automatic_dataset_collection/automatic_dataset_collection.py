@@ -1104,7 +1104,18 @@ def game_loop(args):
                         print('No Timestamp Match - Skip Index : {} / Return to Record Init Point'.format(recording_frame_num))
                         record_init_flag = True     # Set init flag s True in order to return to init point
 
+            else:
+                record_init_flag = True     # recording init flag for restarting from init point in case when image timestamps do not match with HUD info timestamp
 
+                timestamp_list = []         # List of HUD timestamps for finding the matching timestamp with image timestamp
+                HUD_info_list = []          # List of corresponding HUD info for each HUD timestamp
+
+                prev_img = None             # Prev front camera image
+                prev_hud_data = None        # Prev HUD info 
+
+                current_img = None          # Current front camera image
+                current_hud_data = None     # Current HUD info
+                
             if agent.done():
                 if args.loop:
                     agent.set_destination(random.choice(spawn_points).location)
