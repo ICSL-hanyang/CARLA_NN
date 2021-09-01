@@ -828,6 +828,7 @@ class CameraManager(object):
         self.recording = False
 
         self.current_img = None     # Member variable for storing the latest image sensor data produced by callback
+        self.current_img_shape = None
 
         bound_y = 0.5 + self._parent.bounding_box.extent.y
         attachment = carla.AttachmentType
@@ -928,6 +929,7 @@ class CameraManager(object):
             image.convert(self.sensors[self.index][1])
 
             self.current_img = image    # Store the lates image sensor data
+            self.current_img_shape = (image.height, image.width, 4)
 
             array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
             array = np.reshape(array, (image.height, image.width, 4))
