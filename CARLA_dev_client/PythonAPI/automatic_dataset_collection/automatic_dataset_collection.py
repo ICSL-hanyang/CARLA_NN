@@ -103,6 +103,7 @@ from agents.navigation.basic_agent import BasicAgent  # pylint: disable=import-e
 # -- Custom Import for Data Collection -----------------------------------------
 # ==============================================================================
 import datetime
+import threading
 
 
 # ==============================================================================
@@ -936,38 +937,19 @@ class CameraManager(object):
             array = array[:, :, :3]
             array = array[:, :, ::-1]
             self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
-        # if self.recording:
-
-        #     # Skip 0th image
-        #     if self.recording_frame_num == 0:
-        #         self.record_time = str(datetime.datetime.now())     # Save the time and date when the recording starts
-        #         self.recording_frame_num += 1   # Increment record data index
-        #         self.prev_img = None            # Initialize prev image as None
-        #         self.current_img = image        # Initialize current image
-        #         print('0th Frame Skip')
-
-        #     # Start recording camera images after 0th index
-        #     else:
-        #         # Save prev image as the current image at the previous step
-        #         # Save record date, frame num, simulation timestamp in the image save path
-        #         self.prev_img = self.current_img    
-        #         # self.prev_img.save_to_disk('./Recorded_Image/{}_{}_t0_{}.png'.format(self.record_time, self.recording_frame_num, self.prev_img.timestamp))
-
-        #         # Save current image as camera image at the current step
-        #         # Save record date, frame num, simulation timestamp in the image save path
-        #         self.current_img = image
-        #         # self.current_img.save_to_disk('./Recorded_Image/{}_{}_t1_{}.png'.format(self.record_time, self.recording_frame_num, self.current_img.timestamp))
-                
-        #         # Compute the delta time between prev image and current image from their timestamp
-        #         deltaTime_seconds = self.current_img.timestamp - self.prev_img.timestamp
-
-        #         print('Record Time : {} : {} : {} | Delta Time : {} sec --- {}'.format(self.record_time, self.recording_frame_num, self.prev_img.timestamp, deltaTime_seconds, type(image)))
-                
-        #         self.recording_frame_num += 1   # Increment record data index
-
+        
 # ==============================================================================
 # -- Game Loop ---------------------------------------------------------
 # ==============================================================================
+
+def record_data(prev_img, current_img, record_time, recording_frame_num):
+
+    print('record_data function start')
+
+    prev_img.save_to_disk('./Recorded_Image/{}_{}_t0_{}.png'.format(record_time, recording_frame_num, prev_img.timestamp))
+    current_img.save_to_disk('./Recorded_Image/{}_{}_t1_{}.png'.format(record_time, recording_frame_num, current_img.timestamp))
+
+    print('record_data function end')
 
 
 def game_loop(args):
@@ -1052,6 +1034,8 @@ def game_loop(args):
             timestamp_list.append(world.hud.simulation_time)
             HUD_info_list.append(world.hud._info_text)
 
+            record_time = str(datetime.datetime.now())     # Save the time and date when the recording starts
+
             if world.camera_manager.recording == True:
 
                 if record_init_flag == True:
@@ -1074,7 +1058,7 @@ def game_loop(args):
                         record_init_flag = False
 
                     else:
-                        print('0th Index : No Timestamp Match - Skip / Return to Record Init Point')
+                        print('0th Index : No Timestamp Match - Skip : {} / Return to Record Init Point'.format(recording_frame_num))
                         record_init_flag = True
 
                 else:
@@ -1083,8 +1067,8 @@ def game_loop(args):
                     prev_img = current_img
                     prev_hud_data = current_img_hud_data
 
-                    print('prev Img Timestamp : {}'.format(prev_img.timestamp))
-                    print('prev HUD Data : {}'.format(prev_hud_data))
+                    # print('prev Img Timestamp : {}'.format(prev_img.timestamp))
+                    # print('prev HUD Data : {}'.format(prev_hud_data))
                     
                     ### Current ########################################################
                     current_img = world.camera_manager.current_img
@@ -1096,17 +1080,20 @@ def game_loop(args):
 
                         current_img_hud_data = HUD_info_list[match_HUD_idx]
 
-                        print('current Img Timestamp : {}'.format(current_img.timestamp))
-                        print('current HUD Data : {}'.format(current_img_hud_data))
+                        # print('current Img Timestamp : {}'.format(current_img.timestamp))
+                        # print('current HUD Data : {}'.format(current_img_hud_data))
+
+                        t1 = threading.Thread(target=record_data, args=(prev_img, current_img, record_time, recording_frame_num))
+                        t1.start()
 
                         recording_frame_num += 1
                         record_init_flag = False
 
                     else:
-                        print('No Timestamp Match - Skip / Return to Record Init Point')
+                        print('No Timestamp Match - Skip Index : {} / Return to Record Init Point'.format(recording_frame_num))
                         record_init_flag = True
     
-                print('---------------------------------')
+                # print('---------------------------------')
 
 
 
