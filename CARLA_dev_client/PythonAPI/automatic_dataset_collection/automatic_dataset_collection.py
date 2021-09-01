@@ -1059,7 +1059,7 @@ def game_loop(args):
 
                         match_HUD_idx = timestamp_list.index(current_img_timestamp)     # Find the HUD info index with matching timestamp
 
-                        current_img_hud_data = HUD_info_list[match_HUD_idx]             # Retrieve HUD info with matching timestamp
+                        current_hud_data = HUD_info_list[match_HUD_idx]             # Retrieve HUD info with matching timestamp
 
                         recording_frame_num += 1    # Increment record frame num
                         record_init_flag = False    # Set init flag as False in order to move on to next step
@@ -1072,7 +1072,7 @@ def game_loop(args):
 
                     ### Prev ###########################################################
                     prev_img = current_img                      # Store current image from previous timestamp as prev image
-                    prev_hud_data = current_img_hud_data        # Store current HUD info from previous timestamp as prev HUD info
+                    prev_hud_data = current_hud_data        # Store current HUD info from previous timestamp as prev HUD info
 
                     # print('prev Img Timestamp : {}'.format(prev_img.timestamp))
                     # print('prev HUD Data : {}'.format(prev_hud_data))
@@ -1086,10 +1086,12 @@ def game_loop(args):
 
                         match_HUD_idx = timestamp_list.index(current_img_timestamp)     # Find the HUD info index with matching timestamp
 
-                        current_img_hud_data = HUD_info_list[match_HUD_idx]             # Retrieve HUD info with matching timestamp
+                        current_hud_data = HUD_info_list[match_HUD_idx]             # Retrieve HUD info with matching timestamp
 
                         # print('current Img Timestamp : {}'.format(current_img.timestamp))
-                        # print('current HUD Data : {}'.format(current_img_hud_data))
+                        # print('current HUD Data : {}'.format(current_hud_data))
+
+                        record_img_shape = world.camera_manager.current_img_shape
 
                         # Utilize Thread-based File I/O Save in order to minimize the system delay by File I/O access
                         t1 = threading.Thread(target=record_data, args=(prev_img, current_img, record_time, recording_frame_num))   # Init thread for automatic data recording
