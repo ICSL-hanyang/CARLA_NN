@@ -827,10 +827,7 @@ class CameraManager(object):
         self.hud = hud
         self.recording = False
 
-        self.record_time = None
-        self.recording_frame_num = 0
-        self.prev_img = None
-        self.current_img = None
+        self.current_img = None     # Member variable for storing the latest image sensor data produced by callback
 
         bound_y = 0.5 + self._parent.bounding_box.extent.y
         attachment = carla.AttachmentType
@@ -930,7 +927,7 @@ class CameraManager(object):
         else:
             image.convert(self.sensors[self.index][1])
 
-            self.current_img = image
+            self.current_img = image    # Store the lates image sensor data
 
             array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
             array = np.reshape(array, (image.height, image.width, 4))
@@ -999,21 +996,23 @@ def game_loop(args):
 
         clock = pygame.time.Clock()
 
+        # ===============================================================================================
+        # -- Main Automatic Recording Variables ---------------------------------------------------------
+        # ===============================================================================================
 
+        recording_frame_num = 0         # recording frame number as recording index
+        record_init_flag = True         # recording init flag for restarting from init point in case when image timestamps do not match with HUD info timestamp
 
-        recording_frame_num = 0
-        record_init_flag = True
+        timestamp_list = []         # List of HUD timestamps for finding the matching timestamp with image timestamp
+        HUD_info_list = []          # List of corresponding HUD info for each HUD timestamp
 
-        timestamp_list = []
-        HUD_info_list = []
+        prev_img = None             # Prev front camera image
+        prev_hud_data = None        # Prev HUD info 
 
-        prev_img = None
-        prev_hud_data = None
+        current_img = None          # Current front camera image
+        current_hud_data = None     # Current HUD info
 
-        current_img = None
-        current_hud_data = None
-
-
+        # ===============================================================================================
 
         while True:
             clock.tick()
@@ -1029,73 +1028,77 @@ def game_loop(args):
             pygame.display.flip()
 
 
+            # ===============================================================================================
+            # -- Main Automatic Recording Loop --------------------------------------------------------------
+            # ===============================================================================================
 
+            timestamp_list.append(world.hud.simulation_time)    # Store simulation times in order to find the matching time with image timestamp
+            HUD_info_list.append(world.hud._info_text)          # Store HUD info (throttle, steering, location, etc) of each time stamp in order to find the matching info with image timestamp
 
-            timestamp_list.append(world.hud.simulation_time)
-            HUD_info_list.append(world.hud._info_text)
+            record_time = str(datetime.datetime.now())     # Save the time and date when the simulation starts
 
-            record_time = str(datetime.datetime.now())     # Save the time and date when the recording starts
-
+            # Start recording when R is pressed / when recording function is activated
             if world.camera_manager.recording == True:
 
-                if record_init_flag == True:
+                # Init Point --- Initialize prev image and current image
+                # Return to this point if image timestamp fails to find matching timestamp and HUD info 
+                if record_init_flag == True:    # If init flag is activated, initialize prev image and current image
 
                     ### Prev ###########################################################
-                    prev_img = None
-                    prev_hud_data = None
+                    prev_img = None             # Init prev image as None
+                    prev_hud_data = None        # Init prev HUD info as None
 
                     ### Current ########################################################
-                    current_img = world.camera_manager.current_img
-                    current_img_timestamp = current_img.timestamp
+                    current_img = world.camera_manager.current_img      # Init current image as the latest image produced by callback from camera manager
+                    current_img_timestamp = current_img.timestamp       # Retrieve current image timestamp
 
-                    if current_img_timestamp in timestamp_list:
+                    # Find the matching timestamp from simulation timestamp list
+                    if current_img_timestamp in timestamp_list:     # If there is a matching timestamp in simulation timestamp, bind this info with image
 
-                        match_HUD_idx = timestamp_list.index(current_img_timestamp)
+                        match_HUD_idx = timestamp_list.index(current_img_timestamp)     # Find the HUD info index with matching timestamp
 
-                        current_img_hud_data = HUD_info_list[match_HUD_idx]
+                        current_img_hud_data = HUD_info_list[match_HUD_idx]             # Retrieve HUD info with matching timestamp
 
-                        recording_frame_num += 1
-                        record_init_flag = False
+                        recording_frame_num += 1    # Increment record frame num
+                        record_init_flag = False    # Set init flag as False in order to move on to next step
 
-                    else:
+                    else:   # If it fails to find the match between image timestamps and simulation timestamps, restart from init point
                         print('0th Index : No Timestamp Match - Skip : {} / Return to Record Init Point'.format(recording_frame_num))
-                        record_init_flag = True
+                        record_init_flag = True     # Set init flag s True in order to return to init point
 
                 else:
 
                     ### Prev ###########################################################
-                    prev_img = current_img
-                    prev_hud_data = current_img_hud_data
+                    prev_img = current_img                      # Store current image from previous timestamp as prev image
+                    prev_hud_data = current_img_hud_data        # Store current HUD info from previous timestamp as prev HUD info
 
                     # print('prev Img Timestamp : {}'.format(prev_img.timestamp))
                     # print('prev HUD Data : {}'.format(prev_hud_data))
                     
                     ### Current ########################################################
-                    current_img = world.camera_manager.current_img
-                    current_img_timestamp = current_img.timestamp
+                    current_img = world.camera_manager.current_img      # Init current image as the latest image produced by callback from camera manager
+                    current_img_timestamp = current_img.timestamp       # Retrieve current image timestamp
 
-                    if current_img_timestamp in timestamp_list:
+                    # Find the matching timestamp from simulation timestamp list
+                    if current_img_timestamp in timestamp_list:     # If there is a matching timestamp in simulation timestamp, bind this info with image
 
-                        match_HUD_idx = timestamp_list.index(current_img_timestamp)
+                        match_HUD_idx = timestamp_list.index(current_img_timestamp)     # Find the HUD info index with matching timestamp
 
-                        current_img_hud_data = HUD_info_list[match_HUD_idx]
+                        current_img_hud_data = HUD_info_list[match_HUD_idx]             # Retrieve HUD info with matching timestamp
 
                         # print('current Img Timestamp : {}'.format(current_img.timestamp))
                         # print('current HUD Data : {}'.format(current_img_hud_data))
 
-                        t1 = threading.Thread(target=record_data, args=(prev_img, current_img, record_time, recording_frame_num))
-                        t1.start()
+                        # Utilize Thread-based File I/O Save in order to minimize the system delay by File I/O access
+                        t1 = threading.Thread(target=record_data, args=(prev_img, current_img, record_time, recording_frame_num))   # Init thread for automatic data recording
+                        t1.start()      # Run & Detach the thread in order to save the data in parallel with simulation
 
-                        recording_frame_num += 1
-                        record_init_flag = False
+                        recording_frame_num += 1    # Increment record frame num
+                        record_init_flag = False    # Set init flag as False in order to move on to next step
 
-                    else:
+                    else:   # If it fails to find the match between image timestamps and simulation timestamps, restart from init point
                         print('No Timestamp Match - Skip Index : {} / Return to Record Init Point'.format(recording_frame_num))
-                        record_init_flag = True
-    
-                # print('---------------------------------')
-
-
+                        record_init_flag = True     # Set init flag s True in order to return to init point
 
 
             if agent.done():
