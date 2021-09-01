@@ -104,6 +104,9 @@ from agents.navigation.basic_agent import BasicAgent  # pylint: disable=import-e
 # ==============================================================================
 import datetime
 import threading
+import cv2 as cv
+import h5py
+import os
 
 
 # ==============================================================================
@@ -941,12 +944,50 @@ class CameraManager(object):
 # -- Game Loop ---------------------------------------------------------
 # ==============================================================================
 
-def record_data(prev_img, current_img, record_time, recording_frame_num):
+def record_data(collection_mode,
+                prev_img, prev_hud_data,
+                current_img, current_hud_data,
+                record_img_shape,
+                record_time, recording_frame_num):
 
     print('record_data function start')
 
-    prev_img.save_to_disk('./Recorded_Image/{}_{}_t0_{}.png'.format(record_time, recording_frame_num, prev_img.timestamp))
-    current_img.save_to_disk('./Recorded_Image/{}_{}_t1_{}.png'.format(record_time, recording_frame_num, current_img.timestamp))
+    prev_img_array = np.frombuffer(prev_img.raw_data, dtype=np.dtype("uint8"))
+    prev_img_array = np.reshape(prev_img_array, record_img_shape)
+    prev_img_array = prev_img_array[:, :, :3]
+    prev_img_array = prev_img_array[:, :, ::-1]
+
+    current_img_array = np.frombuffer(current_img.raw_data, dtype=np.dtype("uint8"))
+    current_img_array = np.reshape(current_img_array, record_img_shape)
+    current_img_array = current_img_array[:, :, :3]
+    current_img_array = current_img_array[:, :, ::-1]
+
+    if os.path.exists('./Recorded_Image/{}_prev_img'.format(collection_mode)) == False:
+        print('Creating prev_img save directory')
+        os.mkdir('./Recorded_Image/{}_prev_img'.format(collection_mode))
+
+    if os.path.exists('./Recorded_Image/{}_current_img'.format(collection_mode)) == False:
+        print('Creating current_img save directory')
+        os.mkdir('./Recorded_Image/{}_current_img'.format(collection_mode))
+
+    if os.path.exists('./Recorded_Image/{}_prev_hud_data'.format(collection_mode)) == False:
+        print('Creating prev_hud_data save directory')
+        os.mkdir('./Recorded_Image/{}_prev_hud_data'.format(collection_mode))
+
+    if os.path.exists('./Recorded_Image/{}_current_hud_data'.format(collection_mode)) == False:
+        print('Creating current_hud_data save directory')
+        os.mkdir('./Recorded_Image/{}_current_hud_data'.format(collection_mode))
+
+    cv.imwrite('./Recorded_Image/{}_prev_img/{}_{}_t0_{}.jpeg'.format(collection_mode, record_time, recording_frame_num, prev_img.timestamp), prev_img_array)
+    cv.imwrite('./Recorded_Image/{}_current_img/{}_{}_t1_{}.jpeg'.format(collection_mode, record_time, recording_frame_num, current_img.timestamp), current_img_array)
+
+    prev_hud_txt = open('./Recorded_Image/{}_prev_hud_data/{}_{}_t0_{}.txt'.format(collection_mode, record_time, recording_frame_num, prev_img.timestamp), 'w')
+    prev_hud_txt.writelines(str(prev_hud_data))
+    prev_hud_txt.close()
+
+    current_hud_txt = open('./Recorded_Image/{}_current_hud_data/{}_{}_t0_{}.txt'.format(collection_mode, record_time, recording_frame_num, prev_img.timestamp), 'w')
+    current_hud_txt.writelines(str(current_hud_data))
+    current_hud_txt.close()
 
     print('record_data function end')
 
@@ -1013,6 +1054,13 @@ def game_loop(args):
 
         current_img = None          # Current front camera image
         current_hud_data = None     # Current HUD info
+
+        print('collection_mode : {}'.format(args.collection_mode))
+        
+        # dataset_file = h5py.File('./Recorded_Image/carla_dataset_' + args.collection_mode + '.hdf5', 'w')
+
+        # img_group = dataset_file.create_group('img_group')
+        # hud_data_group = dataset_file.create_group('hud_data_group')
 
         # ===============================================================================================
 
@@ -1094,7 +1142,12 @@ def game_loop(args):
                         record_img_shape = world.camera_manager.current_img_shape
 
                         # Utilize Thread-based File I/O Save in order to minimize the system delay by File I/O access
-                        t1 = threading.Thread(target=record_data, args=(prev_img, current_img, record_time, recording_frame_num))   # Init thread for automatic data recording
+                        # Init thread for automatic data recording
+                        t1 = threading.Thread(target=record_data, args=(args.collection_mode,
+                                                                        prev_img, prev_hud_data,
+                                                                        current_img, current_hud_data,
+                                                                        record_img_shape,
+                                                                        record_time, recording_frame_num))   
                         t1.start()      # Run & Detach the thread in order to save the data in parallel with simulation
 
                         recording_frame_num += 1    # Increment record frame num
