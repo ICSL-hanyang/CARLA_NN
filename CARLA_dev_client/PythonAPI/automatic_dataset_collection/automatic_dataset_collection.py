@@ -1271,6 +1271,12 @@ def main():
         default=None,
         type=int)
 
+    argparser.add_argument(
+        '--collection_mode',
+        help='Set collection mode between training and validation (default: training)',
+        default='training',
+        type=str)
+
     args = argparser.parse_args()
 
     args.width, args.height = [int(x) for x in args.res.split('x')]
