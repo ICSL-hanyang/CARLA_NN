@@ -959,7 +959,7 @@ class CameraManager(object):
 #         self.model.to(processor)
 #         self.model.eval()
 
-#     def inference_NN_control(self, input_data):
+#     def control_inference(self, input_data):
 
 #         NN_control = self.model(input_data)
 
@@ -1207,10 +1207,15 @@ def game_loop(args):
             control.manual_gear_shift = False
 
             # ==============================================================================
-            #
-            #
+            # 
             # PRODUCE NN INFERENCE OUTPUT as carla.VehicleControl
+            # 
+            # [Applying Manual Vehicle Control]
             # ex : control = carla.VehicleControl(throttle=1.0, steer=1.0, brake=0.0, hand_brake=False, reverse=True, manual_gear_shift=False, gear=0)
+            #      world.player.apply_control(control)
+            # 
+            # [Applying NN-based Inference Vehicle Control]
+            # ex : control = DNN_Controller.control_inference(input_data)
             #      world.player.apply_control(control)
             #
             # ==============================================================================
