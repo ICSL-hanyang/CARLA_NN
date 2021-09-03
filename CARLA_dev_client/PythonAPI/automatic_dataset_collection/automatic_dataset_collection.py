@@ -1210,7 +1210,8 @@ def game_loop(args):
             #
             #
             # PRODUCE NN INFERENCE OUTPUT as carla.VehicleControl
-            #
+            # ex : control = carla.VehicleControl(throttle=1.0, steer=1.0, brake=0.0, hand_brake=False, reverse=True, manual_gear_shift=False, gear=0)
+            #      world.player.apply_control(control)
             #
             # ==============================================================================
 
