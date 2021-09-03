@@ -939,7 +939,33 @@ class CameraManager(object):
             array = array[:, :, :3]
             array = array[:, :, ::-1]
             self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
-        
+
+
+# # ==============================================================================
+# # -- DNN Controller ------------------------------------------------------------
+# # ==============================================================================
+
+# class DNN_Controller(object):
+#     """ Class for Deep Neural Network-based Vehicle Controller """
+
+#     def __init__(self, pretrained_path='', device='cpu'):
+#         """Constructor method"""
+#         processor = torch.device(device if torch.cuda.is_available() else 'cpu')
+
+#         checkpoint = torch.load(pretrained_path)
+
+#         self.model = NN()
+#         self.model.load_state_dict(checkpoint['model_state_dict'])
+#         self.model.to(processor)
+#         self.model.eval()
+
+#     def inference_NN_control(self, input_data):
+
+#         NN_control = self.model(input_data)
+
+#         return carla.VehicleControl(throttle=1.0, steer=1.0, brake=0.0, hand_brake=False, reverse=True, manual_gear_shift=False, gear=0)
+
+
 # ==============================================================================
 # -- Game Loop ---------------------------------------------------------
 # ==============================================================================
