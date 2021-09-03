@@ -1179,6 +1179,15 @@ def game_loop(args):
 
             control = agent.run_step()
             control.manual_gear_shift = False
+
+            # ==============================================================================
+            #
+            #
+            # PRODUCE NN INFERENCE OUTPUT as carla.VehicleControl
+            #
+            #
+            # ==============================================================================
+
             world.player.apply_control(control)
 
     finally:
