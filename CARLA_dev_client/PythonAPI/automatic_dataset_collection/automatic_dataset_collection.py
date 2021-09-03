@@ -1064,6 +1064,8 @@ def game_loop(args):
 
         # ===============================================================================================
 
+        record_time = str(datetime.datetime.now())     # Save the time and date when the simulation starts
+        
         while True:
             clock.tick()
             if args.sync:
@@ -1084,8 +1086,6 @@ def game_loop(args):
 
             timestamp_list.append(world.hud.simulation_time)    # Store simulation times in order to find the matching time with image timestamp
             HUD_info_list.append(world.hud._info_text)          # Store HUD info (throttle, steering, location, etc) of each time stamp in order to find the matching info with image timestamp
-
-            record_time = str(datetime.datetime.now())     # Save the time and date when the simulation starts
 
             # Start recording when R is pressed / when recording function is activated
             if world.camera_manager.recording == True:
