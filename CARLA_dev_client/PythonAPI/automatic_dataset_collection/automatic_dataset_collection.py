@@ -648,8 +648,8 @@ class HUD(object):
 
             ### Prepare the display based on info dictionary
             self._info_text += [
-                ('Speed:', self.info_dict['Speed'], 0.0, 5.556),
-                ('Jump:', self.info_dict['Jump'])]
+                ('Speed:', self.info_dict['Walker_Speed'], 0.0, 5.556),
+                ('Jump:', self.info_dict['Walker_Jump'])]
 
         self._info_text += [
             '',
