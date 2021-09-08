@@ -566,33 +566,91 @@ class HUD(object):
         collision = [x / max_col for x in collision]
         vehicles = world.world.get_actors().filter('vehicle.*')
 
+        ### Initialize HUD Data Dictionary ###
+        self.info_dict = {'Server' : None,
+                          'Client' : None,
+                          'Vehicle' : None,
+                          'Map' : None,
+                          'Simulation_Time' : None,
+                          'Speed' : None,
+                          'Heading' : None,
+                          'Location' : None,
+                          'GNSS' : None,
+                          'Height' : None,
+
+                          'Throttle' : None,
+                          'Steer' : None,
+                          'Brake' : None,
+                          'Reverse' : None,
+                          'Hand_brake' : None,
+                          'Manual' : None,
+                          'Gear' : None,
+                          
+                          'Speed' : None,
+                          'Jump' : None,
+                          
+                          'Collision' : None,
+                          'Number_of_vehicles' : None}
+
+        ### Collect Simulation Information into Dictionary ###
+        self.info_dict['Server'] = self.server_fps      # Server Frame per Seconds
+        self.info_dict['Client'] = clock.get_fps()      # Client Frame per Seconds
+        self.info_dict['Vehicle'] = get_actor_display_name(world.player, truncate=20)   # Vehicle Type
+        self.info_dict['Map'] = world.map.name.split('/')[-1]                           # Map Type
+        self.info_dict['Simulation_Time'] = str(datetime.timedelta(seconds=int(self.simulation_time)))
+        self.info_dict['Speed'] = (3.6 * math.sqrt(vel.x**2 + vel.y**2 + vel.z**2))                 # Current Speed (km/h)
+        self.info_dict['Heading'] = (transform.rotation.yaw, heading)                               # [yaw (Degree), heading]
+        self.info_dict['Location'] = (transform.location.x, transform.location.y)                   # Location in the simulation map w.r.t world frame
+        self.info_dict['GNSS'] = (world.gnss_sensor.lat, world.gnss_sensor.lon)                     # GNSS location
+        self.info_dict['Height'] = transform.location.z                                             # Height in the simulation map w.r.t world frame
+        
+        ### Prepare the display based on info dictionary
         self._info_text = [
-            'Server:  % 16.0f FPS' % self.server_fps,
-            'Client:  % 16.0f FPS' % clock.get_fps(),
+            'Server:  % 16.0f FPS' % self.info_dict['Server'],
+            'Client:  % 16.0f FPS' % self.info_dict['Client'],
             '',
-            'Vehicle: % 20s' % get_actor_display_name(world.player, truncate=20),
-            'Map:     % 20s' % world.map.name.split('/')[-1],
-            'Simulation time: % 12s' % datetime.timedelta(seconds=int(self.simulation_time)),
+            'Vehicle: % 20s' % self.info_dict['Vehicle'],
+            'Map:     % 20s' % self.info_dict['Map'],
+            'Simulation time: % 12s' % self.info_dict['Simulation_Time'],
             '',
-            'Speed:   % 15.0f km/h' % (3.6 * math.sqrt(vel.x**2 + vel.y**2 + vel.z**2)),
-            u'Heading:% 16.0f\N{DEGREE SIGN} % 2s' % (transform.rotation.yaw, heading),
-            'Location:% 20s' % ('(% 5.1f, % 5.1f)' % (transform.location.x, transform.location.y)),
-            'GNSS:% 24s' % ('(% 2.6f, % 3.6f)' % (world.gnss_sensor.lat, world.gnss_sensor.lon)),
-            'Height:  % 18.0f m' % transform.location.z,
+            'Speed:   % 15.0f km/h' % self.info_dict['Speed'],
+            u'Heading:% 16.0f\N{DEGREE SIGN} % 2s' % self.info_dict['Heading'],
+            'Location:% 20s' % ('(% 5.1f, % 5.1f)' % self.info_dict['Location']),
+            'GNSS:% 24s' % ('(% 2.6f, % 3.6f)' % self.info_dict['GNSS']),
+            'Height:  % 18.0f m' % self.info_dict['Height'],
             '']
+
         if isinstance(control, carla.VehicleControl):
+            
+            ### Collect Vehicle Control Information into Dictionary ###
+            self.info_dict['Throttle'] = control.throttle
+            self.info_dict['Steer'] = control.steer
+            self.info_dict['Brake'] = control.brake
+            self.info_dict['Reverse'] = control.reverse
+            self.info_dict['Hand_brake'] = control.hand_brake
+            self.info_dict['Manual'] = control.manual_gear_shift
+            self.info_dict['Gear'] = {-1: 'R', 0: 'N'}.get(control.gear, control.gear)
+
+            ### Prepare the display based on info dictionary
             self._info_text += [
-                ('Throttle:', control.throttle, 0.0, 1.0),
-                ('Steer:', control.steer, -1.0, 1.0),
-                ('Brake:', control.brake, 0.0, 1.0),
-                ('Reverse:', control.reverse),
-                ('Hand brake:', control.hand_brake),
-                ('Manual:', control.manual_gear_shift),
-                'Gear:        %s' % {-1: 'R', 0: 'N'}.get(control.gear, control.gear)]
+                ('Throttle:', self.info_dict['Throttle'], 0.0, 1.0),
+                ('Steer:', self.info_dict['Steer'], -1.0, 1.0),
+                ('Brake:', self.info_dict['Brake'], 0.0, 1.0),
+                ('Reverse:', self.info_dict['Reverse']),
+                ('Hand brake:', self.info_dict['Hand_brake']),
+                ('Manual:', self.info_dict['Manual']),
+                'Gear:        %s' % self.info_dict['Gear']]
+
         elif isinstance(control, carla.WalkerControl):
+            ### Collect Other Simulation Info into Dictionary ###
+            self.info_dict['Speed'] = control.speed
+            self.info_dict['Jump'] = control.jump
+
+            ### Prepare the display based on info dictionary
             self._info_text += [
-                ('Speed:', control.speed, 0.0, 5.556),
-                ('Jump:', control.jump)]
+                ('Speed:', self.info_dict['Speed'], 0.0, 5.556),
+                ('Jump:', self.info_dict['Jump'])]
+
         self._info_text += [
             '',
             'Collision:',
@@ -995,8 +1053,8 @@ class CameraManager(object):
 # ==============================================================================
 
 def record_data(collection_mode,
-                prev_img, prev_hud_data,
-                current_img, current_hud_data,
+                prev_img, prev_hud_data_dict,
+                current_img, current_hud_data_dict,
                 record_img_shape,
                 record_time, recording_frame_num):
 
@@ -1031,13 +1089,13 @@ def record_data(collection_mode,
     cv.imwrite('./Recorded_Image/{}/{}/prev_img/{}_{}_t0_{}.jpeg'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), prev_img.timestamp), prev_img_array)
     cv.imwrite('./Recorded_Image/{}/{}/current_img/{}_{}_t1_{}.jpeg'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), current_img.timestamp), current_img_array)
 
-    prev_hud_txt = open('./Recorded_Image/{}/{}/prev_hud_data/{}_{}_t0_{}.txt'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), prev_img.timestamp), 'w')
-    prev_hud_txt.writelines(str(prev_hud_data))
-    prev_hud_txt.close()
+    prev_hud_dict_txt = open('./Recorded_Image/{}/{}/prev_hud_data/{}_{}_t0_{}_dict.txt'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), prev_img.timestamp), 'w')
+    prev_hud_dict_txt.writelines(str(prev_hud_data_dict))
+    prev_hud_dict_txt.close()
 
-    current_hud_txt = open('./Recorded_Image/{}/{}/current_hud_data/{}_{}_t1_{}.txt'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), current_img.timestamp), 'w')
-    current_hud_txt.writelines(str(current_hud_data))
-    current_hud_txt.close()
+    current_hud_dict_txt = open('./Recorded_Image/{}/{}/current_hud_data/{}_{}_t1_{}_dict.txt'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), current_img.timestamp), 'w')
+    current_hud_dict_txt.writelines(str(current_hud_data_dict))
+    current_hud_dict_txt.close()
 
     print('record_data function end')
 
@@ -1094,27 +1152,22 @@ def game_loop(args):
         # -- Main Automatic Recording Variables ---------------------------------------------------------
         # ===============================================================================================
 
-        recording_frame_num = 0         # recording frame number as recording index
-        record_init_flag = True         # recording init flag for restarting from init point in case when image timestamps do not match with HUD info timestamp
+        recording_frame_num = 0          # recording frame number as recording index
+        record_init_flag = True          # recording init flag for restarting from init point in case when image timestamps do not match with HUD info timestamp
 
-        timestamp_list = []         # List of HUD timestamps for finding the matching timestamp with image timestamp
-        HUD_info_list = []          # List of corresponding HUD info for each HUD timestamp
+        timestamp_list = []              # List of HUD timestamps for finding the matching timestamp with image timestamp
+        HUD_info_dict_list = []          # List of corresponding HUD info dict for each HUD timestamp
 
-        prev_img = None             # Prev front camera image
-        prev_hud_data = None        # Prev HUD info 
+        prev_img = None                  # Prev front camera image
+        prev_hud_data_dict = None        # Prev HUD info dict
 
-        current_img = None          # Current front camera image
-        current_hud_data = None     # Current HUD info
+        current_img = None               # Current front camera image
+        current_hud_data_dict = None     # Current HUD info
 
         collection_mode = args.collection_mode  # Dataset Collection Mode : training, validation, test
 
         print('collection_mode : {}'.format(collection_mode))
-        
-        # dataset_file = h5py.File('./Recorded_Image/carla_dataset_' + args.collection_mode + '.hdf5', 'w')
-
-        # img_group = dataset_file.create_group('img_group')
-        # hud_data_group = dataset_file.create_group('hud_data_group')
-
+    
         # ===============================================================================================
 
         record_time = str(datetime.datetime.now())     # Save the time and date when the simulation starts
@@ -1138,7 +1191,7 @@ def game_loop(args):
             # ===============================================================================================
 
             timestamp_list.append(world.hud.simulation_time)    # Store simulation times in order to find the matching time with image timestamp
-            HUD_info_list.append(world.hud._info_text)          # Store HUD info (throttle, steering, location, etc) of each time stamp in order to find the matching info with image timestamp
+            HUD_info_dict_list.append(world.hud.info_dict)      # Store HUD info dictionary (throttle, steering, location, etc) of each time stamp in order to find the matching info with image timestamp
 
             # Start recording when R is pressed / when recording function is activated
             if world.camera_manager.recording == True:
@@ -1149,7 +1202,7 @@ def game_loop(args):
 
                     ### Prev ###########################################################
                     prev_img = None             # Init prev image as None
-                    prev_hud_data = None        # Init prev HUD info as None
+                    prev_hud_data_dict = None   # Init prev HUD info dict as None
 
                     ### Current ########################################################
                     current_img = world.camera_manager.current_img      # Init current image as the latest image produced by callback from camera manager
@@ -1160,7 +1213,7 @@ def game_loop(args):
 
                         match_HUD_idx = timestamp_list.index(current_img_timestamp)     # Find the HUD info index with matching timestamp
 
-                        current_hud_data = HUD_info_list[match_HUD_idx]             # Retrieve HUD info with matching timestamp
+                        current_hud_data_dict = HUD_info_dict_list[match_HUD_idx]   # Retrieve HUD info dict with matching timestamp
 
                         recording_frame_num += 1    # Increment record frame num
                         record_init_flag = False    # Set init flag as False in order to move on to next step
@@ -1172,12 +1225,9 @@ def game_loop(args):
                 else:
 
                     ### Prev ###########################################################
-                    prev_img = current_img                      # Store current image from previous timestamp as prev image
-                    prev_hud_data = current_hud_data        # Store current HUD info from previous timestamp as prev HUD info
+                    prev_img = current_img                          # Store current image from previous timestamp as prev image
+                    prev_hud_data_dict = current_hud_data_dict      # Store current HUD info dict from previous timestamp as prev HUD info dict
 
-                    # print('prev Img Timestamp : {}'.format(prev_img.timestamp))
-                    # print('prev HUD Data : {}'.format(prev_hud_data))
-                    
                     ### Current ########################################################
                     current_img = world.camera_manager.current_img      # Init current image as the latest image produced by callback from camera manager
                     current_img_timestamp = current_img.timestamp       # Retrieve current image timestamp
@@ -1187,18 +1237,15 @@ def game_loop(args):
 
                         match_HUD_idx = timestamp_list.index(current_img_timestamp)     # Find the HUD info index with matching timestamp
 
-                        current_hud_data = HUD_info_list[match_HUD_idx]             # Retrieve HUD info with matching timestamp
-
-                        # print('current Img Timestamp : {}'.format(current_img.timestamp))
-                        # print('current HUD Data : {}'.format(current_hud_data))
-
+                        current_hud_data_dict = HUD_info_dict_list[match_HUD_idx]   # Retrieve HUD info dict with matching timestamp
+                        
                         record_img_shape = world.camera_manager.current_img_shape
 
                         # Utilize Thread-based File I/O Save in order to minimize the system delay by File I/O access
                         # Init thread for automatic data recording
                         t1 = threading.Thread(target=record_data, args=(collection_mode,
-                                                                        prev_img, prev_hud_data,
-                                                                        current_img, current_hud_data,
+                                                                        prev_img, prev_hud_data_dict,
+                                                                        current_img, current_hud_data_dict,
                                                                         record_img_shape,
                                                                         record_time, recording_frame_num))   
                         t1.start()      # Run & Detach the thread in order to save the data in parallel with simulation
@@ -1214,13 +1261,13 @@ def game_loop(args):
                 record_init_flag = True     # recording init flag for restarting from init point in case when image timestamps do not match with HUD info timestamp
 
                 timestamp_list = []         # List of HUD timestamps for finding the matching timestamp with image timestamp
-                HUD_info_list = []          # List of corresponding HUD info for each HUD timestamp
+                HUD_info_dict_list = []     # List of corresponding HUD info dict for each HUD timestamp
 
                 prev_img = None             # Prev front camera image
-                prev_hud_data = None        # Prev HUD info 
+                prev_hud_data_dict = None   # Prev HUD info dict
 
-                current_img = None          # Current front camera image
-                current_hud_data = None     # Current HUD info
+                current_img = None               # Current front camera image
+                current_hud_data_dict = None     # Current HUD info dict
                 
             if agent.done():
                 if args.loop:
