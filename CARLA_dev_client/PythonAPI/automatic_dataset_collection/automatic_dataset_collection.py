@@ -1220,7 +1220,6 @@ def game_loop(args):
             world.render(display)
             pygame.display.flip()
 
-
             # ===============================================================================================
             # -- Main Automatic Recording Loop --------------------------------------------------------------
             # ===============================================================================================
@@ -1313,8 +1312,10 @@ def game_loop(args):
                     print("The target has been reached, stopping the simulation")
                     break
 
-            control = agent.run_step()
-            control.manual_gear_shift = False
+            if controller._autopilot_enabled:
+                control = agent.run_step()
+                control.manual_gear_shift = False
+                world.player.apply_control(control)
 
             # ==============================================================================
             # 
@@ -1322,15 +1323,15 @@ def game_loop(args):
             # 
             # [Applying Manual Vehicle Control]
             # ex : control = carla.VehicleControl(throttle=1.0, steer=1.0, brake=0.0, hand_brake=False, reverse=True, manual_gear_shift=False, gear=0)
+            #      control.manual_gear_shift = False
             #      world.player.apply_control(control)
             # 
             # [Applying NN-based Inference Vehicle Control]
             # ex : control = DNN_Controller.control_inference(input_data)
+            #      control.manual_gear_shift = False
             #      world.player.apply_control(control)
             #
             # ==============================================================================
-
-            world.player.apply_control(control)
 
     finally:
 
