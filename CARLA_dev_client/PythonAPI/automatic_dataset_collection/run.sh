@@ -1,7 +1,7 @@
 #!/bin/sh
 
 seed=42
-collection_mode='training'  # validation
+collection_mode='training'
 
 python3 automatic_dataset_collection.py --seed "$seed" \
                                         --loop \
