@@ -586,8 +586,8 @@ class HUD(object):
                           'Manual' : None,
                           'Gear' : None,
                           
-                          'Speed' : None,
-                          'Jump' : None,
+                          'Walker_Speed' : None,
+                          'Walker_Jump' : None,
                           
                           'Collision' : None,
                           'Number_of_vehicles' : None}
@@ -643,8 +643,8 @@ class HUD(object):
 
         elif isinstance(control, carla.WalkerControl):
             ### Collect Other Simulation Info into Dictionary ###
-            self.info_dict['Speed'] = control.speed
-            self.info_dict['Jump'] = control.jump
+            self.info_dict['Walker_Speed'] = control.speed
+            self.info_dict['Walker_Jump'] = control.jump
 
             ### Prepare the display based on info dictionary
             self._info_text += [
