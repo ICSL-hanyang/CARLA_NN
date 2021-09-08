@@ -429,7 +429,7 @@ class KeyboardControl(object):
                         collection_mode = 'test'
                     elif collection_mode == 'test':
                         collection_mode = 'training'
-                    world.hud.notification("Current Collection Mode : {}".format(collection_mode))
+                    world.hud.notification("Switch Mode : {}".format(collection_mode))
 
                 elif event.key == K_LEFTBRACKET:
                     world.hud.notification("Current Collection Mode : {}".format(collection_mode))
