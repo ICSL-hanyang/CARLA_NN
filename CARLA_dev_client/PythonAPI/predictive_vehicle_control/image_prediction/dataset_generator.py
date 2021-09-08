@@ -114,7 +114,7 @@ class carla_dataset_generator():
 
             self.local_print('----------------------------------------------------')
 
-    def local_print(self, sen, level='low'):
+    def local_print(self, sen, level='high'):
 
         if self.verbosity == 'high':
             print(sen)
