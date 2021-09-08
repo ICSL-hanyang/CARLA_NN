@@ -91,10 +91,10 @@ class carla_dataset_generator():
             dataset_length = len(prev_img_name)
 
             for idx in tqdm(range(dataset_length)):
-                print(prev_img_dataset_path + '/' + prev_img_name[idx])
-                print(prev_hud_data_dataset_path + '/' + prev_hud_data_name[idx])
-                print(current_img_dataset_path + '/' + current_img_name[idx])
-                print(current_hud_data_dataset_path + '/' + current_hud_data_name[idx])
+                self.local_print(prev_img_dataset_path + '/' + prev_img_name[idx])
+                self.local_print(prev_hud_data_dataset_path + '/' + prev_hud_data_name[idx])
+                self.local_print(current_img_dataset_path + '/' + current_img_name[idx])
+                self.local_print(current_hud_data_dataset_path + '/' + current_hud_data_name[idx])
 
                 prev_img_path_group.create_dataset(name=str(idx).zfill(10), 
                                                    data=[prev_img_dataset_path + '/' + prev_img_name[idx]],
