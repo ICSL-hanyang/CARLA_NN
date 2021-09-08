@@ -63,6 +63,10 @@ try:
     from pygame.locals import K_z
     from pygame.locals import K_MINUS
     from pygame.locals import K_EQUALS
+
+    from pygame.locals import K_RIGHTBRACKET    # Collection Mode Switch Key
+    from pygame.locals import K_LEFTBRACKET    # Collection Mode Display Key
+
 except ImportError:
     raise RuntimeError('cannot import pygame, make sure pygame package is installed')
 
@@ -107,6 +111,8 @@ import threading
 import cv2 as cv
 import h5py
 import os
+
+collection_mode = ''
 
 
 # ==============================================================================
@@ -278,6 +284,9 @@ class KeyboardControl(object):
         world.hud.notification("Press 'H' or '?' for help.", seconds=4.0)
 
     def parse_events(self, client, world, clock):
+
+        global collection_mode
+
         if isinstance(self._control, carla.VehicleControl):
             current_lights = self._lights
         for event in pygame.event.get():
@@ -376,6 +385,21 @@ class KeyboardControl(object):
                     else:
                         world.recording_start += 1
                     world.hud.notification("Recording start time is %d" % (world.recording_start))
+
+                ### Press Right Bracket in order to switch between dataset collection modes : training, validation, test
+                elif event.key == K_RIGHTBRACKET:
+                    if collection_mode == 'training':
+                        collection_mode = 'validation'
+                    elif collection_mode == 'validation':
+                        collection_mode = 'test'
+                    elif collection_mode == 'test':
+                        collection_mode = 'training'
+                    world.hud.notification("Current Collection Mode : {}".format(collection_mode))
+
+                elif event.key == K_LEFTBRACKET:
+                    world.hud.notification("Current Collection Mode : {}".format(collection_mode))
+
+
                 if isinstance(self._control, carla.VehicleControl):
                     if event.key == K_q:
                         self._control.gear = 1 if self._control.reverse else -1
@@ -1004,14 +1028,14 @@ def record_data(collection_mode,
         print('Creating current_hud_data save directory')
         os.makedirs('./Recorded_Image/{}/{}/current_hud_data'.format(record_time, collection_mode))
 
-    cv.imwrite('./Recorded_Image/{}/{}/prev_img/{}_{}_t0_{}.jpeg'.format(record_time, collection_mode, record_time, recording_frame_num, prev_img.timestamp), prev_img_array)
-    cv.imwrite('./Recorded_Image/{}/{}/current_img/{}_{}_t1_{}.jpeg'.format(record_time, collection_mode, record_time, recording_frame_num, current_img.timestamp), current_img_array)
+    cv.imwrite('./Recorded_Image/{}/{}/prev_img/{}_{}_t0_{}.jpeg'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), prev_img.timestamp), prev_img_array)
+    cv.imwrite('./Recorded_Image/{}/{}/current_img/{}_{}_t1_{}.jpeg'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), current_img.timestamp), current_img_array)
 
-    prev_hud_txt = open('./Recorded_Image/{}/{}/prev_hud_data/{}_{}_t0_{}.txt'.format(record_time, collection_mode, record_time, recording_frame_num, prev_img.timestamp), 'w')
+    prev_hud_txt = open('./Recorded_Image/{}/{}/prev_hud_data/{}_{}_t0_{}.txt'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), prev_img.timestamp), 'w')
     prev_hud_txt.writelines(str(prev_hud_data))
     prev_hud_txt.close()
 
-    current_hud_txt = open('./Recorded_Image/{}/{}/current_hud_data/{}_{}_t0_{}.txt'.format(record_time, collection_mode, record_time, recording_frame_num, prev_img.timestamp), 'w')
+    current_hud_txt = open('./Recorded_Image/{}/{}/current_hud_data/{}_{}_t1_{}.txt'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), current_img.timestamp), 'w')
     current_hud_txt.writelines(str(current_hud_data))
     current_hud_txt.close()
 
@@ -1022,6 +1046,8 @@ def game_loop(args):
     Main loop of the simulation. It handles updating all the HUD information,
     ticking the agent and, if needed, the world.
     """
+
+    global collection_mode      # global variable for controlling collection mode
 
     pygame.init()
     pygame.font.init()
@@ -1080,7 +1106,9 @@ def game_loop(args):
         current_img = None          # Current front camera image
         current_hud_data = None     # Current HUD info
 
-        print('collection_mode : {}'.format(args.collection_mode))
+        collection_mode = args.collection_mode  # Dataset Collection Mode : training, validation, test
+
+        print('collection_mode : {}'.format(collection_mode))
         
         # dataset_file = h5py.File('./Recorded_Image/carla_dataset_' + args.collection_mode + '.hdf5', 'w')
 
@@ -1168,7 +1196,7 @@ def game_loop(args):
 
                         # Utilize Thread-based File I/O Save in order to minimize the system delay by File I/O access
                         # Init thread for automatic data recording
-                        t1 = threading.Thread(target=record_data, args=(args.collection_mode,
+                        t1 = threading.Thread(target=record_data, args=(collection_mode,
                                                                         prev_img, prev_hud_data,
                                                                         current_img, current_hud_data,
                                                                         record_img_shape,
