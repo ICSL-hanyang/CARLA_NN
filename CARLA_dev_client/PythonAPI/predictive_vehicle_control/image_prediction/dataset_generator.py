@@ -90,6 +90,8 @@ class carla_dataset_generator():
             
             dataset_length = len(prev_img_name)
 
+            self.local_print('[{} dataset length : {}]'.format(group.attrs['type'], dataset_length), level='low')
+
             for idx in tqdm(range(dataset_length)):
                 self.local_print(prev_img_dataset_path + '/' + prev_img_name[idx])
                 self.local_print(prev_hud_data_dataset_path + '/' + prev_hud_data_name[idx])
