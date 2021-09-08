@@ -988,30 +988,30 @@ def record_data(collection_mode,
     current_img_array = current_img_array[:, :, :3]
     current_img_array = current_img_array[:, :, ::-1]
 
-    if os.path.exists('./Recorded_Image/{}/{}_prev_img'.format(record_time, collection_mode)) == False:
+    if os.path.exists('./Recorded_Image/{}/{}/prev_img'.format(record_time, collection_mode)) == False:
         print('Creating prev_img save directory')
-        os.makedirs('./Recorded_Image/{}/{}_prev_img'.format(record_time, collection_mode))
+        os.makedirs('./Recorded_Image/{}/{}/prev_img'.format(record_time, collection_mode))
 
-    if os.path.exists('./Recorded_Image/{}/{}_current_img'.format(record_time, collection_mode)) == False:
+    if os.path.exists('./Recorded_Image/{}/{}/current_img'.format(record_time, collection_mode)) == False:
         print('Creating current_img save directory')
-        os.makedirs('./Recorded_Image/{}/{}_current_img'.format(record_time, collection_mode))
+        os.makedirs('./Recorded_Image/{}/{}/current_img'.format(record_time, collection_mode))
 
-    if os.path.exists('./Recorded_Image/{}/{}_prev_hud_data'.format(record_time, collection_mode)) == False:
+    if os.path.exists('./Recorded_Image/{}/{}/prev_hud_data'.format(record_time, collection_mode)) == False:
         print('Creating prev_hud_data save directory')
-        os.makedirs('./Recorded_Image/{}/{}_prev_hud_data'.format(record_time, collection_mode))
+        os.makedirs('./Recorded_Image/{}/{}/prev_hud_data'.format(record_time, collection_mode))
 
-    if os.path.exists('./Recorded_Image/{}/{}_current_hud_data'.format(record_time, collection_mode)) == False:
+    if os.path.exists('./Recorded_Image/{}/{}/current_hud_data'.format(record_time, collection_mode)) == False:
         print('Creating current_hud_data save directory')
-        os.makedirs('./Recorded_Image/{}/{}_current_hud_data'.format(record_time, collection_mode))
+        os.makedirs('./Recorded_Image/{}/{}/current_hud_data'.format(record_time, collection_mode))
 
-    cv.imwrite('./Recorded_Image/{}/{}_prev_img/{}_{}_t0_{}.jpeg'.format(record_time, collection_mode, record_time, recording_frame_num, prev_img.timestamp), prev_img_array)
-    cv.imwrite('./Recorded_Image/{}/{}_current_img/{}_{}_t1_{}.jpeg'.format(record_time, collection_mode, record_time, recording_frame_num, current_img.timestamp), current_img_array)
+    cv.imwrite('./Recorded_Image/{}/{}/prev_img/{}_{}_t0_{}.jpeg'.format(record_time, collection_mode, record_time, recording_frame_num, prev_img.timestamp), prev_img_array)
+    cv.imwrite('./Recorded_Image/{}/{}/current_img/{}_{}_t1_{}.jpeg'.format(record_time, collection_mode, record_time, recording_frame_num, current_img.timestamp), current_img_array)
 
-    prev_hud_txt = open('./Recorded_Image/{}/{}_prev_hud_data/{}_{}_t0_{}.txt'.format(record_time, collection_mode, record_time, recording_frame_num, prev_img.timestamp), 'w')
+    prev_hud_txt = open('./Recorded_Image/{}/{}/prev_hud_data/{}_{}_t0_{}.txt'.format(record_time, collection_mode, record_time, recording_frame_num, prev_img.timestamp), 'w')
     prev_hud_txt.writelines(str(prev_hud_data))
     prev_hud_txt.close()
 
-    current_hud_txt = open('./Recorded_Image/{}/{}_current_hud_data/{}_{}_t0_{}.txt'.format(record_time, collection_mode, record_time, recording_frame_num, prev_img.timestamp), 'w')
+    current_hud_txt = open('./Recorded_Image/{}/{}/current_hud_data/{}_{}_t0_{}.txt'.format(record_time, collection_mode, record_time, recording_frame_num, prev_img.timestamp), 'w')
     current_hud_txt.writelines(str(current_hud_data))
     current_hud_txt.close()
 
