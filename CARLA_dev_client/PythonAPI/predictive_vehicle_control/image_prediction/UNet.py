@@ -109,7 +109,7 @@ class UNet(nn.Module):
         # 1x1 Conv-based 3 Channel Image Reconstruction
         self.conv_fc = nn.Conv2d(in_channels=64, out_channels=in_channels, kernel_size=1, stride=1, padding=0, bias=True)
 
-    def forward(self, img):
+    def forward(self, img, vehicle_control_feature_vector):
 
         global_print('img : {}'.format(img.size()))
 
