@@ -132,7 +132,7 @@ class carla_dataset(torch.utils.data.Dataset):
         prev_Gear = prev_hud_data_dict['Gear']
 
         ### Prev Vehicle Driving Status ###
-        prev_Speed = prev_hud_data_dict['Speed']
+        prev_Speed = prev_hud_data_dict['Speed']                # Assume max vehicle speed as 100km/h
         prev_Location = prev_hud_data_dict['Location']
         prev_Heading = prev_hud_data_dict['Heading']
         prev_GNSS = prev_hud_data_dict['GNSS']
@@ -145,11 +145,16 @@ class carla_dataset(torch.utils.data.Dataset):
         current_Gear = current_hud_data_dict['Gear']
 
         ### Current Vehicle Driving Status ###
-        current_Speed = current_hud_data_dict['Speed']
+        current_Speed = current_hud_data_dict['Speed']          # Assume max vehicle speed as 100km/h
         current_Location = current_hud_data_dict['Location']
         current_Heading = current_hud_data_dict['Heading']
         current_GNSS = current_hud_data_dict['GNSS']
         current_Height = current_hud_data_dict['Height']
+
+        ### Vehicle Control Feature Vector Assembly ###
+        normalized_prev_Speed = prev_Speed / 100.0     # Normalize vehicle speed assuming that max vehicle speed as 100km/h
+        vehicle_control_feature_vector = np.array([prev_Throttle, prev_Steer, prev_Brake, normalized_prev_Speed])
+        vehicle_control_feature_vector.astype(np.float)
 
         global_print('prev_hud_data_dict keys : {}'.format(list(prev_hud_data_dict.keys())))
         global_print('prev_hud_data_dict : {}'.format(prev_hud_data_dict))
@@ -160,7 +165,7 @@ class carla_dataset(torch.utils.data.Dataset):
 
         global_print('------------------------------------------------------------')
 
-        return prev_img, current_img
+        return prev_img, current_img, vehicle_control_feature_vector
 
     def __len__(self):
 
