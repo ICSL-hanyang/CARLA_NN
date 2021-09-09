@@ -19,8 +19,8 @@ import ast
 import PIL
 from PIL import Image
 
-global_dataloder_print_flag = True
-global_tensor_disp_dataloder_print_flag = False
+global_dataloder_print_flag = False
+global_input_img_disp_flag = True
 
 USE_GRAY = False
 
@@ -97,16 +97,23 @@ class carla_dataset(torch.utils.data.Dataset):
         prev_img = cv.imread(prev_img_path)
         prev_img = cv.resize(prev_img, (572, 572))
         prev_img = np.transpose(prev_img, (2, 0, 1))
+        prev_img = prev_img.astype(np.float)
+        prev_img /= 255.0
 
         current_img = cv.imread(current_img_path)
         current_img = cv.resize(current_img, (572, 572))
         current_img = np.transpose(current_img, (2, 0, 1))
+        current_img = current_img.astype(np.float)
+        current_img /= 255.0
 
-        disp_img = np.concatenate((current_img, prev_img), axis=1)
-        disp_img = np.transpose(disp_img, (1, 2, 0))
-        disp_img = cv.resize(disp_img, dsize=(0, 0), fx=0.5, fy=0.5, interpolation=cv.INTER_LINEAR)
-        cv.imshow('[Up : current_img][Down : prev_img]', disp_img)
-        cv.waitKey(30)
+        if global_input_img_disp_flag == True:
+            disp_img = np.concatenate((current_img, prev_img), axis=1)
+            disp_img = np.transpose(disp_img, (1, 2, 0))
+            disp_img = 255.0 * disp_img
+            disp_img = disp_img.astype(np.uint8)
+            disp_img = cv.resize(disp_img, dsize=(0, 0), fx=0.5, fy=0.5, interpolation=cv.INTER_LINEAR)
+            cv.imshow('[Up : current_img][Down : prev_img]', disp_img)
+            cv.waitKey(30)
         ######################################################################################################
 
         ### HUD Data Loading #################################################################################
