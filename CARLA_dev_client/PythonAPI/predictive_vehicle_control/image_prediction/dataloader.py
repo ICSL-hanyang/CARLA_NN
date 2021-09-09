@@ -13,6 +13,9 @@ import torchvision.transforms.functional as TF
 import torchvision
 from torchvision import transforms
 
+import json
+import ast
+
 import PIL
 from PIL import Image
 
@@ -108,7 +111,7 @@ class carla_dataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
 
-        ### Data Path Preparation ###
+        ### Data Path Preparation ############################################################################
         idx = str(index).zfill(10)
 
         prev_img_path = str((self.prev_img_dataset_path_group[idx][()])[0], 'utf-8')
@@ -117,11 +120,65 @@ class carla_dataset(torch.utils.data.Dataset):
         current_img_path = str((self.current_img_dataset_path_group[idx][()])[0], 'utf-8')
         current_hud_data_path = str((self.current_hud_data_dataset_path_group[idx][()])[0], 'utf-8')
 
-
         global_print('prev_img_path : {}'.format(prev_img_path))
         global_print('prev_hud_data_path : {}'.format(prev_hud_data_path))
         global_print('current_img_path : {}'.format(current_img_path))
         global_print('current_hud_data_path : {}'.format(current_hud_data_path))
+        ######################################################################################################
+
+        ### Image Data Loading ###############################################################################
+        prev_img = cv.imread(prev_img_path)
+
+        current_img = cv.imread(current_img_path)
+
+        disp_img = np.concatenate((current_img, prev_img), axis=0)
+        disp_img = cv.resize(disp_img, dsize=(0, 0), fx=0.5, fy=0.5, interpolation=cv.INTER_LINEAR)
+        cv.imshow('[Up : current_img][Down : prev_img]', disp_img)
+        cv.waitKey(30)
+        ######################################################################################################
+
+        ### HUD Data Loading #################################################################################
+        with open(prev_hud_data_path) as f:
+            prev_hud_data = f.read()
+        prev_hud_data_dict = ast.literal_eval(prev_hud_data)
+
+        with open(current_hud_data_path) as f:
+            current_hud_data = f.read()
+        current_hud_data_dict = ast.literal_eval(current_hud_data)
+
+        ### Prev Vehicle Controls ###
+        prev_Throttle = prev_hud_data_dict['Throttle']
+        prev_Steer = prev_hud_data_dict['Steer']
+        prev_Brake = prev_hud_data_dict['Brake']
+        prev_Gear = prev_hud_data_dict['Gear']
+
+        ### Prev Vehicle Driving Status ###
+        prev_Speed = prev_hud_data_dict['Speed']
+        prev_Location = prev_hud_data_dict['Location']
+        prev_Heading = prev_hud_data_dict['Heading']
+        prev_GNSS = prev_hud_data_dict['GNSS']
+        prev_Height = prev_hud_data_dict['Height']
+
+        ### Current Vehicle Controls ###
+        current_Throttle = current_hud_data_dict['Throttle']
+        current_Steer = current_hud_data_dict['Steer']
+        current_Brake = current_hud_data_dict['Brake']
+        current_Gear = current_hud_data_dict['Gear']
+
+        ### Current Vehicle Driving Status ###
+        current_Speed = current_hud_data_dict['Speed']
+        current_Location = current_hud_data_dict['Location']
+        current_Heading = current_hud_data_dict['Heading']
+        current_GNSS = current_hud_data_dict['GNSS']
+        current_Height = current_hud_data_dict['Height']
+
+        global_print('prev_hud_data_dict keys : {}'.format(list(prev_hud_data_dict.keys())))
+        global_print('prev_hud_data_dict : {}'.format(prev_hud_data_dict))
+
+        global_print('current_hud_data_dict keys : {}'.format(list(current_hud_data_dict.keys())))
+        global_print('current_hud_data_dict : {}'.format(current_hud_data_dict))
+        ######################################################################################################
+
         global_print('------------------------------------------------------------')
 
         return 0
