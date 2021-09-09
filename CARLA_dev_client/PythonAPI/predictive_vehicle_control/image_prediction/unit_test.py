@@ -1,6 +1,7 @@
 import torch
 
 import torch.nn as nn
+import torch.optim as optim
 from torch import device
 from torch.utils.data import DataLoader
 
@@ -16,6 +17,8 @@ from tqdm import tqdm
 
 from dataset_generator import carla_dataset_generator
 from dataloader import carla_dataset
+
+from UNet import UNet
 
 preprocess = transforms.Compose([
     transforms.Resize((640, 1280)),
@@ -37,6 +40,34 @@ predictive_vehicle_control_dataset = carla_dataset(dataset_path='./carla_dataset
 
 dataloader = DataLoader(dataset=predictive_vehicle_control_dataset, batch_size=1, shuffle=False)
 
-for batch_idx, (_) in enumerate(tqdm(dataloader)):
+processor = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+print(processor)
 
-    pass
+predictive_img_model = UNet(in_channels=3)
+predictive_img_model.to(processor)
+
+learning_rate = 1e-4
+
+optimizer = optim.Adam(predictive_img_model.parameters(), lr=learning_rate)
+
+criterion = nn.MSELoss()
+
+for epoch in range(10):
+
+    predictive_img_model.train()
+
+    for batch_idx, (prev_img, current_img) in enumerate(tqdm(dataloader)):
+
+        prev_img = prev_img.to(processor).float()
+        current_img = current_img.to(processor).float()
+
+        # print('prev_img : {}'.format(prev_img.size()))
+        # print('current_img : {}'.format(current_img.size()))
+
+        optimizer.zero_grad()
+        reconstructed_img = predictive_img_model(prev_img)
+        reconstruction_loss = criterion(reconstructed_img, current_img)
+        reconstruction_loss.backward()
+        optimizer.step()
+
+        print('reconstruction_loss : {}'.format(reconstruction_loss.item()))
