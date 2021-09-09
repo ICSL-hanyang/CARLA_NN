@@ -31,39 +31,6 @@ def global_print(print_str):
     if global_dataloder_print_flag == True:
         print(print_str)
 
-def global_tensor_disp(img_tensor):
-
-    global global_tensor_disp_dataloder_print_flag
-
-    if global_tensor_disp_dataloder_print_flag == True:
-
-        if len(img_tensor.size()) == 4:
-
-            seq, channel, height, width = img_tensor.size()
-            for disp_idx in range(seq):
-                
-                if USE_GRAY == True:
-                    horizontal_stack = img_tensor[disp_idx, :3, :, :]
-                else:                
-                    horizontal_stack = torch.cat((img_tensor[disp_idx, :3, :, :], img_tensor[disp_idx, 3:, :, :]), dim=2)
-        
-                if disp_idx == 0:
-                    disp_output = horizontal_stack
-                else:
-                    disp_output = torch.cat((horizontal_stack, disp_output), dim=1)
-
-            print(disp_output.size())
-
-            cv.imshow('img_tensor', np.array(torchvision.transforms.ToPILImage()(disp_output)))
-            cv.waitKey(30)
-
-        elif len(img_tensor.size()) == 3:
-
-            channel, height, width = img_tensor.size()
-
-            cv.imshow('img_tensor', np.array(torchvision.transforms.ToPILImage()(img_tensor)))
-            cv.waitKey(30)
-
 class carla_dataset(torch.utils.data.Dataset):
 
     def __init__(self, dataset_path='', mode='training',
