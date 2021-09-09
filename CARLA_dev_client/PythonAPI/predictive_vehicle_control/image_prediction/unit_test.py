@@ -38,7 +38,7 @@ predictive_vehicle_control_dataset = carla_dataset(dataset_path='./carla_dataset
                                           valid_pretransform=preprocess, valid_posttransform=postprocess,
                                           test_pretransform=preprocess, test_posttransform=postprocess)
 
-dataloader = DataLoader(dataset=predictive_vehicle_control_dataset, batch_size=1, shuffle=False)
+dataloader = DataLoader(dataset=predictive_vehicle_control_dataset, batch_size=1, shuffle=True, drop_last=True)
 
 processor = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 print(processor)
@@ -54,20 +54,25 @@ criterion = nn.MSELoss()
 
 for epoch in range(10):
 
-    predictive_img_model.train()
+    total_train_loss_list = []
 
-    for batch_idx, (prev_img, current_img) in enumerate(tqdm(dataloader)):
+    predictive_img_model.eval()
 
-        prev_img = prev_img.to(processor).float()
-        current_img = current_img.to(processor).float()
+    for batch_idx, (prev_img, current_img, vehicle_control_feature_vector) in enumerate(tqdm(dataloader)):
 
-        # print('prev_img : {}'.format(prev_img.size()))
-        # print('current_img : {}'.format(current_img.size()))
+        # prev_img = prev_img.to(processor).float()
+        # current_img = current_img.to(processor).float()
 
-        optimizer.zero_grad()
-        reconstructed_img = predictive_img_model(prev_img)
-        reconstruction_loss = criterion(reconstructed_img, current_img)
-        reconstruction_loss.backward()
-        optimizer.step()
+        print('prev_img : {}'.format(prev_img.size()))
+        print('current_img : {}'.format(current_img.size()))
+        print('vehicle_control_feature_vector : {}'.format(vehicle_control_feature_vector.size()))
 
-        print('reconstruction_loss : {}'.format(reconstruction_loss.item()))
+        # optimizer.zero_grad()
+        # reconstructed_img = predictive_img_model(prev_img)
+        # reconstruction_loss = criterion(reconstructed_img, current_img)
+        # reconstruction_loss.backward()
+        # optimizer.step()
+
+        # total_train_loss_list.append(reconstruction_loss.item())
+
+    # print('reconstruction_loss : {}'.format(np.mean(total_train_loss_list)))
