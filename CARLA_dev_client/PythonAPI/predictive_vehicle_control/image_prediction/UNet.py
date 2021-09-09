@@ -47,12 +47,12 @@ class UNet(nn.Module):
         # Decoding Path
         self.dec5_1 = Conv_BatchNorm_ActiveF_2d(in_channels=1024, out_channels=512, kernel_size=3, stride=1, padding=1, bias=True)
 
-        self.unpool4 = nn.ConvTranspose2d(in_channels=512, out_channels=512, kernel_size=2, stride=2, padding=0, bias=True)
+        self.unpool4 = nn.ConvTranspose2d(in_channels=512, out_channels=512, kernel_size=2, stride=2, padding=0, output_padding=1, bias=True)
 
         self.dec4_2 = Conv_BatchNorm_ActiveF_2d(in_channels=(512 + 512), out_channels=512, kernel_size=3, stride=1, padding=1, bias=True)
         self.dec4_1 = Conv_BatchNorm_ActiveF_2d(in_channels=512, out_channels=256, kernel_size=3, stride=1, padding=1, bias=True)
 
-        self.unpool3 = nn.ConvTranspose2d(in_channels=256, out_channels=256, kernel_size=2, stride=2, padding=0, bias=True)
+        self.unpool3 = nn.ConvTranspose2d(in_channels=256, out_channels=256, kernel_size=2, stride=2, padding=0, output_padding=1, bias=True)
 
         self.dec3_2 = Conv_BatchNorm_ActiveF_2d(in_channels=(256 + 256), out_channels=256, kernel_size=3, stride=1, padding=1, bias=True)
         self.dec3_1 = Conv_BatchNorm_ActiveF_2d(in_channels=256, out_channels=128, kernel_size=3, stride=1, padding=1, bias=True)
