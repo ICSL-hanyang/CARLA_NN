@@ -186,7 +186,7 @@ class carla_dataset(torch.utils.data.Dataset):
 
         global_print('------------------------------------------------------------')
 
-        return 0
+        return prev_img, current_img
 
     def __len__(self):
 
