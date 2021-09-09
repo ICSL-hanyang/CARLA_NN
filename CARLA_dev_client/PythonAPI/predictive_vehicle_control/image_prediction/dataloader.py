@@ -128,10 +128,15 @@ class carla_dataset(torch.utils.data.Dataset):
 
         ### Image Data Loading ###############################################################################
         prev_img = cv.imread(prev_img_path)
+        prev_img = cv.resize(prev_img, (572, 572))
+        prev_img = np.transpose(prev_img, (2, 0, 1))
 
         current_img = cv.imread(current_img_path)
+        current_img = cv.resize(current_img, (572, 572))
+        current_img = np.transpose(current_img, (2, 0, 1))
 
-        disp_img = np.concatenate((current_img, prev_img), axis=0)
+        disp_img = np.concatenate((current_img, prev_img), axis=1)
+        disp_img = np.transpose(disp_img, (1, 2, 0))
         disp_img = cv.resize(disp_img, dsize=(0, 0), fx=0.5, fy=0.5, interpolation=cv.INTER_LINEAR)
         cv.imshow('[Up : current_img][Down : prev_img]', disp_img)
         cv.waitKey(30)
