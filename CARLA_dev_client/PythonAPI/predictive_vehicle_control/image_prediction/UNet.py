@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torchvision.transforms.functional import pad
 
-global_print_flag = True
+global_print_flag = False
 
 def global_print(print_str):
 
@@ -31,83 +31,56 @@ class UNet(nn.Module):
             return layer_module
 
         # Encoding Path
-        self.enc1_1 = Conv_BatchNorm_ActiveF_2d(in_channels=in_channels, out_channels=64, kernel_size=3, stride=1, padding=1, bias=True)
-        self.enc1_2 = Conv_BatchNorm_ActiveF_2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=1, bias=True)
+        self.enc1_1 = Conv_BatchNorm_ActiveF_2d(in_channels=in_channels, out_channels=16, kernel_size=3, stride=1, padding=1, bias=True)
+        self.enc1_2 = Conv_BatchNorm_ActiveF_2d(in_channels=16, out_channels=16, kernel_size=3, stride=1, padding=1, bias=True)
 
         self.pool1 = nn.MaxPool2d(kernel_size=2)
 
-        self.enc2_1 = Conv_BatchNorm_ActiveF_2d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1, bias=True)
-        self.enc2_2 = Conv_BatchNorm_ActiveF_2d(in_channels=128, out_channels=128, kernel_size=3, stride=1, padding=1, bias=True)
+        self.enc2_1 = Conv_BatchNorm_ActiveF_2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1, bias=True)
+        self.enc2_2 = Conv_BatchNorm_ActiveF_2d(in_channels=32, out_channels=32, kernel_size=3, stride=1, padding=1, bias=True)
 
         self.pool2 = nn.MaxPool2d(kernel_size=2)
 
-        self.enc3_1 = Conv_BatchNorm_ActiveF_2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, padding=1, bias=True)
-        self.enc3_2 = Conv_BatchNorm_ActiveF_2d(in_channels=256, out_channels=256, kernel_size=3, stride=1, padding=1, bias=True)
+        self.enc3_1 = Conv_BatchNorm_ActiveF_2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1, bias=True)
+        self.enc3_2 = Conv_BatchNorm_ActiveF_2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=1, bias=True)
 
         self.pool3 = nn.MaxPool2d(kernel_size=2)
 
-        self.enc4_1 = Conv_BatchNorm_ActiveF_2d(in_channels=256, out_channels=512, kernel_size=3, stride=1, padding=1, bias=True)
-        self.enc4_2 = Conv_BatchNorm_ActiveF_2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1, bias=True)
+        self.enc4_1 = Conv_BatchNorm_ActiveF_2d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1, bias=True)
+        self.enc4_2 = Conv_BatchNorm_ActiveF_2d(in_channels=128, out_channels=128, kernel_size=3, stride=1, padding=1, bias=True)
 
         self.pool4 = nn.MaxPool2d(kernel_size=2)
 
-        self.enc5_1 = Conv_BatchNorm_ActiveF_2d(in_channels=512, out_channels=1024, kernel_size=3, stride=1, padding=1, bias=True)
-        self.enc5_2 = Conv_BatchNorm_ActiveF_2d(in_channels=1024, out_channels=1024, kernel_size=3, stride=1, padding=1, bias=True)
-
-        self.pool5 = nn.MaxPool2d(kernel_size=2)
-
-        self.enc6_1 = Conv_BatchNorm_ActiveF_2d(in_channels=1024, out_channels=2048, kernel_size=3, stride=1, padding=1, bias=True)
-        self.enc6_2 = Conv_BatchNorm_ActiveF_2d(in_channels=2048, out_channels=2048, kernel_size=3, stride=1, padding=1, bias=True)
-
-        self.pool6 = nn.MaxPool2d(kernel_size=2)
-
-        self.enc7_1 = Conv_BatchNorm_ActiveF_2d(in_channels=2048, out_channels=2048, kernel_size=3, stride=1, padding=1, bias=True)
-        self.enc7_2 = Conv_BatchNorm_ActiveF_2d(in_channels=2048, out_channels=2048, kernel_size=3, stride=1, padding=1, bias=True)
-
-        self.pool7 = nn.MaxPool2d(kernel_size=2)
-
-        self.enc8_1 = Conv_BatchNorm_ActiveF_2d(in_channels=2048, out_channels=2048, kernel_size=3, stride=1, padding=1, bias=True)
+        self.enc5_1 = Conv_BatchNorm_ActiveF_2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, padding=1, bias=True)
         
+        # Feature Append and Reshape Layer
+        self.reshape_fc = nn.Linear(in_features=(256 * 7 * 7 + 3), out_features=(256 * 7 * 7), bias=True)
+
         # Decoding Path
-        self.dec8_1 = Conv_BatchNorm_ActiveF_2d(in_channels=2048, out_channels=2048, kernel_size=3, stride=1, padding=1, bias=True)
+        self.dec5_1 = Conv_BatchNorm_ActiveF_2d(in_channels=256, out_channels=128, kernel_size=3, stride=1, padding=1, bias=True)
 
-        self.unpool7 = nn.ConvTranspose2d(in_channels=2048, out_channels=2048, kernel_size=2, stride=2, padding=0, bias=True)
+        self.unpool4 = nn.ConvTranspose2d(in_channels=128, out_channels=128, kernel_size=2, stride=2, padding=0, output_padding=1, bias=True)
 
-        self.dec7_2 = Conv_BatchNorm_ActiveF_2d(in_channels=(2048 + 2048), out_channels=2048, kernel_size=3, stride=1, padding=1, bias=True)
-        self.dec7_1 = Conv_BatchNorm_ActiveF_2d(in_channels=2048, out_channels=2048, kernel_size=3, stride=1, padding=1, bias=True)
+        self.dec4_2 = Conv_BatchNorm_ActiveF_2d(in_channels=(128 + 128), out_channels=128, kernel_size=3, stride=1, padding=1, bias=True)
+        self.dec4_1 = Conv_BatchNorm_ActiveF_2d(in_channels=128, out_channels=64, kernel_size=3, stride=1, padding=1, bias=True)
 
-        self.unpool6 = nn.ConvTranspose2d(in_channels=2048, out_channels=2048, kernel_size=2, stride=2, padding=0, output_padding=1, bias=True)
+        self.unpool3 = nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=2, stride=2, padding=0, bias=True)
 
-        self.dec6_2 = Conv_BatchNorm_ActiveF_2d(in_channels=(2048 + 2048), out_channels=2048, kernel_size=3, stride=1, padding=1, bias=True)
-        self.dec6_1 = Conv_BatchNorm_ActiveF_2d(in_channels=2048, out_channels=1024, kernel_size=3, stride=1, padding=1, bias=True)
+        self.dec3_2 = Conv_BatchNorm_ActiveF_2d(in_channels=(64 + 64), out_channels=64, kernel_size=3, stride=1, padding=1, bias=True)
+        self.dec3_1 = Conv_BatchNorm_ActiveF_2d(in_channels=64, out_channels=32, kernel_size=3, stride=1, padding=1, bias=True)
 
-        self.unpool5 = nn.ConvTranspose2d(in_channels=1024, out_channels=1024, kernel_size=2, stride=2, padding=0, output_padding=1, bias=True)
-        
-        self.dec5_2 = Conv_BatchNorm_ActiveF_2d(in_channels=(1024 + 1024), out_channels=1024, kernel_size=3, stride=1, padding=1, bias=True)
-        self.dec5_1 = Conv_BatchNorm_ActiveF_2d(in_channels=1024, out_channels=512, kernel_size=3, stride=1, padding=1, bias=True)
+        self.unpool2 = nn.ConvTranspose2d(in_channels=32, out_channels=32, kernel_size=2, stride=2, padding=0, bias=True)
 
-        self.unpool4 = nn.ConvTranspose2d(in_channels=512, out_channels=512, kernel_size=2, stride=2, padding=0, output_padding=1, bias=True)
+        self.dec2_2 = Conv_BatchNorm_ActiveF_2d(in_channels=(32 + 32), out_channels=32, kernel_size=3, stride=1, padding=1, bias=True)
+        self.dec2_1 = Conv_BatchNorm_ActiveF_2d(in_channels=32, out_channels=16, kernel_size=3, stride=1, padding=1, bias=True)
 
-        self.dec4_2 = Conv_BatchNorm_ActiveF_2d(in_channels=(512 + 512), out_channels=512, kernel_size=3, stride=1, padding=1, bias=True)
-        self.dec4_1 = Conv_BatchNorm_ActiveF_2d(in_channels=512, out_channels=256, kernel_size=3, stride=1, padding=1, bias=True)
+        self.unpool1 = nn.ConvTranspose2d(in_channels=16, out_channels=16, kernel_size=2, stride=2, padding=0, bias=True)
 
-        self.unpool3 = nn.ConvTranspose2d(in_channels=256, out_channels=256, kernel_size=2, stride=2, padding=0, output_padding=1, bias=True)
-
-        self.dec3_2 = Conv_BatchNorm_ActiveF_2d(in_channels=(256 + 256), out_channels=256, kernel_size=3, stride=1, padding=1, bias=True)
-        self.dec3_1 = Conv_BatchNorm_ActiveF_2d(in_channels=256, out_channels=128, kernel_size=3, stride=1, padding=1, bias=True)
-
-        self.unpool2 = nn.ConvTranspose2d(in_channels=128, out_channels=128, kernel_size=2, stride=2, padding=0, bias=True)
-
-        self.dec2_2 = Conv_BatchNorm_ActiveF_2d(in_channels=(128 + 128), out_channels=128, kernel_size=3, stride=1, padding=1, bias=True)
-        self.dec2_1 = Conv_BatchNorm_ActiveF_2d(in_channels=128, out_channels=64, kernel_size=3, stride=1, padding=1, bias=True)
-
-        self.unpool1 = nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=2, stride=2, padding=0, bias=True)
-
-        self.dec1_2 = Conv_BatchNorm_ActiveF_2d(in_channels=(64 + 64), out_channels=64, kernel_size=3, stride=1, padding=1, bias=True)
-        self.dec1_1 = Conv_BatchNorm_ActiveF_2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=1, bias=True)
+        self.dec1_2 = Conv_BatchNorm_ActiveF_2d(in_channels=(16 + 16), out_channels=16, kernel_size=3, stride=1, padding=1, bias=True)
+        self.dec1_1 = Conv_BatchNorm_ActiveF_2d(in_channels=16, out_channels=16, kernel_size=3, stride=1, padding=1, bias=True)
 
         # 1x1 Conv-based 3 Channel Image Reconstruction
-        self.conv_fc = nn.Conv2d(in_channels=64, out_channels=in_channels, kernel_size=1, stride=1, padding=0, bias=True)
+        self.conv_fc = nn.Conv2d(in_channels=16, out_channels=in_channels, kernel_size=1, stride=1, padding=0, bias=True)
 
     def forward(self, img, vehicle_control_feature_vector):
 
@@ -144,59 +117,28 @@ class UNet(nn.Module):
 
         enc5_1 = self.enc5_1(pool4)
         global_print('enc5_1 : {}'.format(enc5_1.size()))
-        enc5_2 = self.enc5_2(enc5_1)
-        global_print('enc5_2 : {}'.format(enc5_1.size()))
-        pool5 = self.pool5(enc5_2)
-        global_print('pool5 : {}'.format(pool5.size()))
 
-        enc6_1 = self.enc6_1(pool5)
-        global_print('enc6_1 : {}'.format(enc6_1.size()))
-        enc6_2 = self.enc6_2(enc6_1)
-        global_print('enc6_2 : {}'.format(enc6_2.size()))
-        pool6 = self.pool6(enc6_2)
-        global_print('pool6 : {}'.format(pool6.size()))
+        # Feature Append and Reshape 
+        global_print('----------------------------------------------------')
+        
+        batchsize, channel, width, height = enc5_1.size()
+        
+        flat_enc5_1 = torch.flatten(enc5_1, start_dim=1)
+        global_print('flat_enc5_1 : {}'.format(flat_enc5_1.size()))
 
-        enc7_1 = self.enc7_1(pool6)
-        global_print('enc7_1 : {}'.format(enc7_1.size()))
-        enc7_2 = self.enc7_2(enc7_1)
-        global_print('enc7_2 : {}'.format(enc7_2.size()))
-        pool7 = self.pool7(enc7_2)
-        global_print('pool7 : {}'.format(pool7.size()))
+        cat_flat_enc5_1 = torch.cat((flat_enc5_1, vehicle_control_feature_vector[:, :3]), dim=1)
+        global_print('cat_flat_enc5_1 : {}'.format(cat_flat_enc5_1.size()))
 
-        enc8_1 = self.enc8_1(pool7)
-        global_print('enc8_1 : {}'.format(enc8_1.size()))
+        reshape_fc_out = self.reshape_fc(cat_flat_enc5_1)
+        global_print('reshape_fc_out : {}'.format(reshape_fc_out.size()))
+
+        reshaped_enc5_1 = reshape_fc_out.view(batchsize, channel, width, height)
+        global_print('reshaped_enc5_1 : {}'.format(reshaped_enc5_1.size()))
 
         # Decoding Path
         global_print('----------------------------------------------------')
 
-        dec8_1 = self.dec8_1(enc8_1)
-        global_print('dec8_1 : {}'.format(dec8_1.size()))
-
-        unpool7 = self.unpool7(dec8_1)
-        global_print('unpool7 : {}'.format(unpool7.size()))
-
-        cat7 = torch.cat((unpool7, enc7_2), dim=1)
-        dec7_2 = self.dec7_2(cat7)
-        global_print('dec7_2 : {}'.format(dec7_2.size()))
-        dec7_1 = self.dec7_1(dec7_2)
-        global_print('dec7_1 : {}'.format(dec7_1.size()))
-
-        unpool6 = self.unpool6(dec7_1)
-        global_print('unpool6 : {}'.format(unpool6.size()))
-
-        cat6 = torch.cat((unpool6, enc6_2), dim=1)
-        dec6_2 = self.dec6_2(cat6)
-        global_print('dec6_2 : {}'.format(dec6_2.size()))
-        dec6_1 = self.dec6_1(dec6_2)
-        global_print('dec6_1 : {}'.format(dec6_1.size()))
-
-        unpool5 = self.unpool5(dec6_1)
-        global_print('unpool5 : {}'.format(unpool5.size()))
-
-        cat5 = torch.cat((unpool5, enc5_2), dim=1)
-        dec5_2 = self.dec5_2(cat5)
-        global_print('dec5_2 : {}'.format(dec5_2.size()))
-        dec5_1 = self.dec5_1(dec5_2)
+        dec5_1 = self.dec5_1(reshaped_enc5_1)
         global_print('dec5_1 : {}'.format(dec5_1.size()))
 
         unpool4 = self.unpool4(dec5_1)
