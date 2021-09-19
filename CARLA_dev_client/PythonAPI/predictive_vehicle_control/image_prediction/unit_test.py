@@ -10,6 +10,8 @@ import torchvision
 from torchvision import transforms
 import torchvision.transforms.functional as TF
 
+import PIL
+
 import cv2 as cv
 
 import numpy as np
@@ -23,8 +25,6 @@ from dataloader import carla_dataset
 from UNet import UNet
 
 start_time = str(datetime.datetime.now())
-training_writer = SummaryWriter(log_dir='./runs/' + start_time + '/predictive_vehicle_control_training')
-validation_writer = SummaryWriter(log_dir='./runs/' + start_time + '/predictive_vehicle_control_validation')
 
 preprocess = transforms.Compose([
     transforms.Resize((640, 1280)),
@@ -59,11 +59,15 @@ print(processor)
 predictive_img_model = UNet(in_channels=3)
 predictive_img_model.to(processor)
 
-learning_rate = 1e-4
+learning_rate = 1e-7
 
-optimizer = optim.SGD(predictive_img_model.parameters(), lr=learning_rate, momentum=0.9, nesterov=True)
+# optimizer = optim.SGD(predictive_img_model.parameters(), lr=learning_rate, momentum=0.9, nesterov=True)
+optimizer = optim.RMSprop(predictive_img_model.parameters(), lr=learning_rate, momentum=0.9)
 
 criterion = nn.MSELoss()
+
+training_writer = SummaryWriter(log_dir='./runs/' + start_time + '/predictive_vehicle_control_training')
+validation_writer = SummaryWriter(log_dir='./runs/' + start_time + '/predictive_vehicle_control_validation')
 
 for epoch in range(400):
 
@@ -91,6 +95,8 @@ for epoch in range(400):
         total_train_loss_list.append(reconstruction_loss.item())
 
     training_writer.add_scalar('Next Image Reconstruction Loss [{}]'.format(start_time), np.mean(total_train_loss_list), global_step=epoch)
+    training_writer.add_image('Original Next Image [{}]'.format(start_time), current_img, global_step=epoch, dataformats='NCHW')
+    training_writer.add_image('Next Image Reconstruction Result [{}]'.format(start_time), reconstructed_img, global_step=epoch, dataformats='NCHW')
 
     print('Current State [Validation] - [EPOCH : {}]'.format(str(epoch)))
     predictive_img_model.eval()
@@ -112,3 +118,5 @@ for epoch in range(400):
             total_valid_loss_list.append(reconstruction_loss.item())
 
         validation_writer.add_scalar('Next Image Reconstruction Loss [{}]'.format(start_time), np.mean(total_valid_loss_list), global_step=epoch)
+        validation_writer.add_image('Original Next Image [{}]'.format(start_time), current_img, global_step=epoch, dataformats='NCHW')
+        validation_writer.add_image('Next Image Reconstruction Result [{}]'.format(start_time), reconstructed_img, global_step=epoch, dataformats='NCHW')
