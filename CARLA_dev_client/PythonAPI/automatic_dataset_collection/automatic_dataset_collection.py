@@ -942,6 +942,7 @@ class CameraManager(object):
     def __init__(self, parent_actor, hud):
         """Constructor method"""
         self.sensor = None
+        self.segmented_sensor = None    # Seperate camera sensor object for recording segmented front camera image
         self.surface = None
         self._parent = parent_actor
         self.hud = hud
@@ -949,6 +950,9 @@ class CameraManager(object):
 
         self.current_img = None     # Member variable for storing the latest image sensor data produced by callback
         self.current_img_shape = None
+
+        self.current_segmented_img = None       # Member variable for storing the latest segmented image sensor data produced by callback
+        self.current_segmented_img_shape = None
 
         bound_y = 0.5 + self._parent.bounding_box.extent.y
         attachment = carla.AttachmentType
@@ -1001,6 +1005,13 @@ class CameraManager(object):
                 self.surface = None
             self.sensor = self._parent.get_world().spawn_actor(
                 self.sensors[index][-1],
+                self._camera_transforms[self.transform_index][0],
+                attach_to=self._parent,
+                attachment_type=self._camera_transforms[self.transform_index][1])
+            
+            # Segmented camera sensor / Respawn it everytime the user changes its perspective
+            self.segmented_sensor = self._parent.get_world().spawn_actor(
+                self.sensors[5][-1],
                 self._camera_transforms[self.transform_index][0],
                 attach_to=self._parent,
                 attachment_type=self._camera_transforms[self.transform_index][1])
