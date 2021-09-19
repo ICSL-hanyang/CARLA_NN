@@ -1122,22 +1122,12 @@ class CameraManager(object):
 # ==============================================================================
 
 def record_data(collection_mode,
-                prev_img, prev_hud_data_dict,
-                current_img, current_hud_data_dict,
+                prev_img, prev_segmented_img, prev_hud_data_dict,
+                current_img, current_segmented_img, current_hud_data_dict,
                 record_img_shape,
                 record_time, recording_frame_num):
 
     print('record_data function start')
-
-    prev_img_array = np.frombuffer(prev_img.raw_data, dtype=np.dtype("uint8"))
-    prev_img_array = np.reshape(prev_img_array, record_img_shape)
-    prev_img_array = prev_img_array[:, :, :3]
-    prev_img_array = prev_img_array[:, :, ::-1]
-
-    current_img_array = np.frombuffer(current_img.raw_data, dtype=np.dtype("uint8"))
-    current_img_array = np.reshape(current_img_array, record_img_shape)
-    current_img_array = current_img_array[:, :, :3]
-    current_img_array = current_img_array[:, :, ::-1]
 
     if os.path.exists('./Recorded_Image/{}/{}/prev_img'.format(record_time, collection_mode)) == False:
         print('Creating prev_img save directory')
@@ -1147,6 +1137,14 @@ def record_data(collection_mode,
         print('Creating current_img save directory')
         os.makedirs('./Recorded_Image/{}/{}/current_img'.format(record_time, collection_mode))
 
+    if os.path.exists('./Recorded_Image/{}/{}/prev_segmented_img'.format(record_time, collection_mode)) == False:
+        print('Creating prev_segmented_img save directory')
+        os.makedirs('./Recorded_Image/{}/{}/prev_segmented_img'.format(record_time, collection_mode))
+
+    if os.path.exists('./Recorded_Image/{}/{}/current_segmented_img'.format(record_time, collection_mode)) == False:
+        print('Creating current_segmented_img save directory')
+        os.makedirs('./Recorded_Image/{}/{}/current_segmented_img'.format(record_time, collection_mode))
+
     if os.path.exists('./Recorded_Image/{}/{}/prev_hud_data'.format(record_time, collection_mode)) == False:
         print('Creating prev_hud_data save directory')
         os.makedirs('./Recorded_Image/{}/{}/prev_hud_data'.format(record_time, collection_mode))
@@ -1155,16 +1153,53 @@ def record_data(collection_mode,
         print('Creating current_hud_data save directory')
         os.makedirs('./Recorded_Image/{}/{}/current_hud_data'.format(record_time, collection_mode))
 
-    cv.imwrite('./Recorded_Image/{}/{}/prev_img/{}_{}_t0_{}.jpeg'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), prev_img.timestamp), prev_img_array)
-    cv.imwrite('./Recorded_Image/{}/{}/current_img/{}_{}_t1_{}.jpeg'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), current_img.timestamp), current_img_array)
+    if prev_img is not None:
+        prev_img_array = np.frombuffer(prev_img.raw_data, dtype=np.dtype("uint8"))
+        prev_img_array = np.reshape(prev_img_array, record_img_shape)
+        prev_img_array = prev_img_array[:, :, :3]
+        prev_img_array = prev_img_array[:, :, ::-1]
 
-    prev_hud_dict_txt = open('./Recorded_Image/{}/{}/prev_hud_data/{}_{}_t0_{}_dict.txt'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), prev_img.timestamp), 'w')
-    prev_hud_dict_txt.writelines(str(prev_hud_data_dict))
-    prev_hud_dict_txt.close()
+        cv.imwrite('./Recorded_Image/{}/{}/prev_img/{}_{}_t0_{}.jpeg'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), prev_img.timestamp), prev_img_array)
 
-    current_hud_dict_txt = open('./Recorded_Image/{}/{}/current_hud_data/{}_{}_t1_{}_dict.txt'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), current_img.timestamp), 'w')
-    current_hud_dict_txt.writelines(str(current_hud_data_dict))
-    current_hud_dict_txt.close()
+        prev_hud_dict_txt = open('./Recorded_Image/{}/{}/prev_hud_data/{}_{}_t0_{}_dict.txt'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), prev_img.timestamp), 'w')
+        prev_hud_dict_txt.writelines(str(prev_hud_data_dict))
+        prev_hud_dict_txt.close()
+    
+    else: print('[Error] prev_img Omitted')
+
+    if prev_segmented_img is not None:
+        prev_segmented_img_array = np.frombuffer(prev_segmented_img.raw_data, dtype=np.dtype("uint8"))
+        prev_segmented_img_array = np.reshape(prev_segmented_img_array, record_img_shape)
+        prev_segmented_img_array = prev_segmented_img_array[:, :, :3]
+        prev_segmented_img_array = prev_segmented_img_array[:, :, ::-1]
+
+        cv.imwrite('./Recorded_Image/{}/{}/prev_segmented_img/{}_{}_t0_{}.jpeg'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), prev_segmented_img.timestamp), prev_segmented_img_array)
+
+    else: print('[Error] prev_segmented_img Omitted')
+
+    if current_img is not None:
+        current_img_array = np.frombuffer(current_img.raw_data, dtype=np.dtype("uint8"))
+        current_img_array = np.reshape(current_img_array, record_img_shape)
+        current_img_array = current_img_array[:, :, :3]
+        current_img_array = current_img_array[:, :, ::-1]
+
+        cv.imwrite('./Recorded_Image/{}/{}/current_img/{}_{}_t1_{}.jpeg'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), current_img.timestamp), current_img_array)
+
+        current_hud_dict_txt = open('./Recorded_Image/{}/{}/current_hud_data/{}_{}_t1_{}_dict.txt'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), current_img.timestamp), 'w')
+        current_hud_dict_txt.writelines(str(current_hud_data_dict))
+        current_hud_dict_txt.close()
+
+    else: print('[Error] current_img Omitted')
+
+    if current_segmented_img is not None:
+        current_segmented_img_array = np.frombuffer(current_segmented_img.raw_data, dtype=np.dtype("uint8"))
+        current_segmented_img_array = np.reshape(current_segmented_img_array, record_img_shape)
+        current_segmented_img_array = current_segmented_img_array[:, :, :3]
+        current_segmented_img_array = current_segmented_img_array[:, :, ::-1]
+
+        cv.imwrite('./Recorded_Image/{}/{}/current_segmented_img/{}_{}_t0_{}.jpeg'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), current_segmented_img.timestamp), current_segmented_img_array)
+
+    else: print('[Error] current_segmented_img Omitted')
 
     print('record_data function end')
 
@@ -1228,9 +1263,11 @@ def game_loop(args):
         HUD_info_dict_list = []          # List of corresponding HUD info dict for each HUD timestamp
 
         prev_img = None                  # Prev front camera image
+        prev_segmented_img = None
         prev_hud_data_dict = None        # Prev HUD info dict
 
         current_img = None               # Current front camera image
+        current_segmented_img = None
         current_hud_data_dict = None     # Current HUD info
 
         collection_mode = args.collection_mode  # Dataset Collection Mode : training, validation, test
@@ -1274,6 +1311,8 @@ def game_loop(args):
 
                     ### Current ########################################################
                     current_img = world.camera_manager.current_img      # Init current image as the latest image produced by callback from camera manager
+                    current_segmented_img = world.camera_manager.current_segmented_img      # Init current image as the latest image produced by callback from camera manager
+                    
                     current_img_timestamp = current_img.timestamp       # Retrieve current image timestamp
 
                     # Find the matching timestamp from simulation timestamp list
@@ -1294,10 +1333,13 @@ def game_loop(args):
 
                     ### Prev ###########################################################
                     prev_img = current_img                          # Store current image from previous timestamp as prev image
+                    prev_segmented_img = current_segmented_img
                     prev_hud_data_dict = current_hud_data_dict      # Store current HUD info dict from previous timestamp as prev HUD info dict
 
                     ### Current ########################################################
                     current_img = world.camera_manager.current_img      # Init current image as the latest image produced by callback from camera manager
+                    current_segmented_img = world.camera_manager.current_segmented_img      # Init current image as the latest image produced by callback from camera manager
+                    
                     current_img_timestamp = current_img.timestamp       # Retrieve current image timestamp
 
                     # Find the matching timestamp from simulation timestamp list
@@ -1312,8 +1354,8 @@ def game_loop(args):
                         # Utilize Thread-based File I/O Save in order to minimize the system delay by File I/O access
                         # Init thread for automatic data recording
                         t1 = threading.Thread(target=record_data, args=(collection_mode,
-                                                                        prev_img, prev_hud_data_dict,
-                                                                        current_img, current_hud_data_dict,
+                                                                        prev_img, prev_segmented_img, prev_hud_data_dict,
+                                                                        current_img, current_segmented_img, current_hud_data_dict,
                                                                         record_img_shape,
                                                                         record_time, recording_frame_num))   
                         t1.start()      # Run & Detach the thread in order to save the data in parallel with simulation
@@ -1332,9 +1374,11 @@ def game_loop(args):
                 HUD_info_dict_list = []     # List of corresponding HUD info dict for each HUD timestamp
 
                 prev_img = None             # Prev front camera image
+                prev_segmented_img = None
                 prev_hud_data_dict = None   # Prev HUD info dict
 
                 current_img = None               # Current front camera image
+                current_segmented_img = None
                 current_hud_data_dict = None     # Current HUD info dict
                 
             if agent.done():
