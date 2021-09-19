@@ -1057,13 +1057,16 @@ class CameraManager(object):
             lidar_img[tuple(lidar_data.T)] = (255, 255, 255)
             self.surface = pygame.surfarray.make_surface(lidar_img)
         else:
-            image.convert(self.sensors[self.index][1])
-
-            self.current_img = image    # Store the lates image sensor data
+            ### Front Camera Image Generation ###
+            image.convert(self.sensors[self.index][1])      # Convert camera image based on current sensor color converter setting
+            
+            self.current_img = image    # Store the latest image sensor data
             self.current_img_shape = (image.height, image.width, 4)
 
-            array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
-            array = np.reshape(array, (image.height, image.width, 4))
+            disp_data = image.raw_data
+
+            array = np.frombuffer(disp_data, dtype=np.dtype("uint8"))
+            array = np.reshape(array, self.current_img_shape)
             array = array[:, :, :3]
             array = array[:, :, ::-1]
             self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
