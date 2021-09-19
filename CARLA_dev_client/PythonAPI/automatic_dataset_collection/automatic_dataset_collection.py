@@ -1019,7 +1019,9 @@ class CameraManager(object):
             # We need to pass the lambda a weak reference to
             # self to avoid circular reference.
             weak_self = weakref.ref(self)
-            self.sensor.listen(lambda image: CameraManager._parse_image(weak_self, image))
+            self.sensor.listen(lambda image: CameraManager._parse_image(weak_self, image))                      # Assign image parsing callback for main camera sensor
+            self.segmented_sensor.listen(lambda image: CameraManager._parse_segmented_image(weak_self, image))  # Assign image parsing without rendering callback for segmented camera sensor
+
         if notify:
             self.hud.notification(self.sensors[index][2])
         self.index = index
