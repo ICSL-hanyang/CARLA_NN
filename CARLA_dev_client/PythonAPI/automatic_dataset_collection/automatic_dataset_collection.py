@@ -277,6 +277,7 @@ class World(object):
     def destroy_sensors(self):
         """Destroy sensors"""
         self.camera_manager.sensor.destroy()
+        self.camera_manager.segmented_sensor.destroy()
         self.camera_manager.sensor = None
         self.camera_manager.index = None
 
@@ -284,6 +285,7 @@ class World(object):
         """Destroys all actors"""
         actors = [
             self.camera_manager.sensor,
+            self.camera_manager.segmented_sensor,
             self.collision_sensor.sensor,
             self.lane_invasion_sensor.sensor,
             self.gnss_sensor.sensor,
@@ -1002,7 +1004,10 @@ class CameraManager(object):
         if needs_respawn:
             if self.sensor is not None:
                 self.sensor.destroy()
+                self.segmented_sensor.destroy()     # Destroy segmented front camera image sensor when reseting for different perspective
                 self.surface = None
+
+            # Main camera sensor / Respawn it everytime the user changes its perspective
             self.sensor = self._parent.get_world().spawn_actor(
                 self.sensors[index][-1],
                 self._camera_transforms[self.transform_index][0],
