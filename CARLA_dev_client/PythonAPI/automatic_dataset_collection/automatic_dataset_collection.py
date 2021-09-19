@@ -1068,6 +1068,19 @@ class CameraManager(object):
             array = array[:, :, ::-1]
             self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
 
+    # Image parsing without rendering for recording segmented camera images
+    @staticmethod
+    def _parse_segmented_image(weak_self, image):
+        self = weak_self()
+        if not self:
+            return
+        else:
+            ### Segmented Front Camera Image Generation ###
+            image.convert(self.sensors[5][1])       # Convert camera image into segmented images
+            
+            self.current_segmented_img = image      # Store the latest image sensor data
+            self.current_segmented_img_shape = (image.height, image.width, 4)
+
 
 # # ==============================================================================
 # # -- DNN Controller ------------------------------------------------------------
