@@ -56,9 +56,11 @@ class carla_dataset_generator():
         for group in [train_group, valid_group, test_group]:
 
             prev_img_path_group = main_file.create_group(group.name + '/prev_img_path')
+            prev_segmented_img_path_group = main_file.create_group(group.name + '/prev_segmented_img_path')
             prev_hud_data_path_group = main_file.create_group(group.name + '/prev_hud_data_path')
 
             current_img_path_group = main_file.create_group(group.name + '/current_img_path')
+            current_segmented_img_path_group = main_file.create_group(group.name + '/current_segmented_img_path')
             current_hud_data_path_group = main_file.create_group(group.name + '/current_hud_data_path')
 
             data_idx = 0
@@ -67,26 +69,34 @@ class carla_dataset_generator():
             self.local_print(group.attrs['path'])
 
             prev_img_dataset_path = group.attrs['path'] + '/prev_img'
+            prev_segmented_img_dataset_path = group.attrs['path'] + '/prev_segmented_img'
             prev_hud_data_dataset_path = group.attrs['path'] + '/prev_hud_data'
 
             prev_img_name = sorted(os.listdir(prev_img_dataset_path))
+            prev_segmented_img_name = sorted(os.listdir(prev_segmented_img_dataset_path))
             prev_hud_data_name = sorted(os.listdir(prev_hud_data_dataset_path))
 
             self.local_print(prev_img_dataset_path)
+            self.local_print(prev_segmented_img_dataset_path)
             self.local_print(prev_hud_data_dataset_path)
             self.local_print(len(prev_img_name))
             self.local_print(len(prev_hud_data_name))
+            self.local_print(len(prev_segmented_img_name))
 
             current_img_dataset_path = group.attrs['path'] + '/current_img'
+            current_segmented_img_dataset_path = group.attrs['path'] + '/current_segmented_img'
             current_hud_data_dataset_path = group.attrs['path'] + '/current_hud_data'
 
             current_img_name = sorted(os.listdir(current_img_dataset_path))
+            current_segmented_img_name = sorted(os.listdir(current_segmented_img_dataset_path))
             current_hud_data_name = sorted(os.listdir(current_hud_data_dataset_path))
 
             self.local_print(current_img_dataset_path)
+            self.local_print(current_segmented_img_dataset_path)
             self.local_print(current_hud_data_dataset_path)
             self.local_print(len(current_img_name))
             self.local_print(len(current_hud_data_name))
+            self.local_print(len(current_segmented_img_name))
             
             dataset_length = len(prev_img_name)
 
@@ -94,13 +104,20 @@ class carla_dataset_generator():
 
             for idx in tqdm(range(dataset_length)):
                 self.local_print(prev_img_dataset_path + '/' + prev_img_name[idx])
+                self.local_print(prev_segmented_img_dataset_path + '/' + prev_segmented_img_name[idx])
                 self.local_print(prev_hud_data_dataset_path + '/' + prev_hud_data_name[idx])
+
                 self.local_print(current_img_dataset_path + '/' + current_img_name[idx])
+                self.local_print(current_segmented_img_dataset_path + '/' + current_segmented_img_name[idx])
                 self.local_print(current_hud_data_dataset_path + '/' + current_hud_data_name[idx])
 
                 prev_img_path_group.create_dataset(name=str(idx).zfill(10), 
                                                    data=[prev_img_dataset_path + '/' + prev_img_name[idx]],
                                                    compression='gzip', compression_opts=9)
+
+                prev_segmented_img_path_group.create_dataset(name=str(idx).zfill(10), 
+                                                            data=[prev_segmented_img_dataset_path + '/' + prev_segmented_img_name[idx]],
+                                                            compression='gzip', compression_opts=9)
 
                 prev_hud_data_path_group.create_dataset(name=str(idx).zfill(10), 
                                                         data=[prev_hud_data_dataset_path + '/' + prev_hud_data_name[idx]],
@@ -110,6 +127,10 @@ class carla_dataset_generator():
                                                       data=[current_img_dataset_path + '/' + current_img_name[idx]],
                                                       compression='gzip', compression_opts=9)
 
+                current_segmented_img_path_group.create_dataset(name=str(idx).zfill(10), 
+                                                                data=[current_segmented_img_dataset_path + '/' + current_segmented_img_name[idx]],
+                                                                compression='gzip', compression_opts=9)
+                                                      
                 current_hud_data_path_group.create_dataset(name=str(idx).zfill(10), 
                                                            data=[current_hud_data_dataset_path + '/' + current_hud_data_name[idx]],
                                                            compression='gzip', compression_opts=9)
