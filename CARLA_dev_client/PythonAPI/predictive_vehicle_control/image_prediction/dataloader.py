@@ -210,7 +210,7 @@ class carla_dataset(torch.utils.data.Dataset):
 
         global_print('------------------------------------------------------------')
 
-        return prev_img, current_img, vehicle_control_feature_vector
+        return prev_img, prev_segmented_img, current_img, current_segmented_img, vehicle_control_feature_vector, predictive_vehicle_control_feature_vector
 
     def __len__(self):
 
