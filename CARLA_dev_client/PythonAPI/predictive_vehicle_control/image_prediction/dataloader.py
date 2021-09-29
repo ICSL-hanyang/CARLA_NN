@@ -47,23 +47,29 @@ class carla_dataset(torch.utils.data.Dataset):
 
         if mode == 'training':
             self.prev_img_dataset_path_group = self.dataset_file['/training_group/prev_img_path']
+            self.prev_segmented_img_path_group = self.dataset_file['/training_group/prev_segmented_img_path']
             self.prev_hud_data_dataset_path_group = self.dataset_file['/training_group/prev_hud_data_path']
 
             self.current_img_dataset_path_group = self.dataset_file['/training_group/current_img_path']
+            self.current_segmented_img_path_group = self.dataset_file['/training_group/current_segmented_img_path']
             self.current_hud_data_dataset_path_group = self.dataset_file['/training_group/current_hud_data_path']
 
         elif mode == 'validation':
             self.prev_img_dataset_path_group = self.dataset_file['/validation_group/prev_img_path']
+            self.prev_segmented_img_path_group = self.dataset_file['/validation_group/prev_segmented_img_path']
             self.prev_hud_data_dataset_path_group = self.dataset_file['/validation_group/prev_hud_data_path']
 
             self.current_img_dataset_path_group = self.dataset_file['/validation_group/current_img_path']
+            self.current_segmented_img_path_group = self.dataset_file['/validation_group/current_segmented_img_path']
             self.current_hud_data_dataset_path_group = self.dataset_file['/validation_group/current_hud_data_path']
 
         elif mode == 'test':
             self.prev_img_dataset_path_group = self.dataset_file['/test_group/prev_img_path']
+            self.prev_segmented_img_path_group = self.dataset_file['/test_group/prev_segmented_img_path']
             self.prev_hud_data_dataset_path_group = self.dataset_file['/test_group/prev_hud_data_path']
 
             self.current_img_dataset_path_group = self.dataset_file['/test_group/current_img_path']
+            self.current_segmented_img_path_group = self.dataset_file['/test_group/current_segmented_img_path']
             self.current_hud_data_dataset_path_group = self.dataset_file['/test_group/current_hud_data_path']
 
         self.len = self.prev_img_dataset_path_group.__len__()
@@ -82,9 +88,11 @@ class carla_dataset(torch.utils.data.Dataset):
         idx = str(index).zfill(10)
 
         prev_img_path = str((self.prev_img_dataset_path_group[idx][()])[0], 'utf-8')
+        prev_segmented_img_path = str((self.prev_segmented_img_path_group[idx][()])[0], 'utf-8')
         prev_hud_data_path = str((self.prev_hud_data_dataset_path_group[idx][()])[0], 'utf-8')
 
         current_img_path = str((self.current_img_dataset_path_group[idx][()])[0], 'utf-8')
+        current_segmented_img_path = str((self.current_segmented_img_path_group[idx][()])[0], 'utf-8')
         current_hud_data_path = str((self.current_hud_data_dataset_path_group[idx][()])[0], 'utf-8')
 
         global_print('prev_img_path : {}'.format(prev_img_path))
@@ -118,6 +126,34 @@ class carla_dataset(torch.utils.data.Dataset):
             disp_img = disp_img.astype(np.uint8)
             disp_img = cv.resize(disp_img, dsize=(0, 0), fx=0.5, fy=0.5, interpolation=cv.INTER_LINEAR)
             cv.imshow('[Up : current_img][Down : prev_img]', disp_img)
+            cv.waitKey(30)
+        ######################################################################################################
+
+        ### Segmented Image Data Loading #####################################################################
+        height = 720
+        width = 1280
+
+        prev_segmented_img = cv.imread(prev_segmented_img_path)
+        prev_segmented_img = prev_segmented_img[(height * 3)//4 : height, width//10 : (width * 9)//10, ...]
+        prev_segmented_img = cv.resize(prev_segmented_img, (120, 120))
+        prev_segmented_img = np.transpose(prev_segmented_img, (2, 0, 1))
+        prev_segmented_img = prev_segmented_img.astype(np.float)
+        prev_segmented_img /= 255.0
+
+        current_segmented_img = cv.imread(current_segmented_img_path)
+        current_segmented_img = current_segmented_img[(height * 3)//4 : height, width//10 : (width * 9)//10, ...]
+        current_segmented_img = cv.resize(current_segmented_img, (120, 120))
+        current_segmented_img = np.transpose(current_segmented_img, (2, 0, 1))
+        current_segmented_img = current_segmented_img.astype(np.float)
+        current_segmented_img /= 255.0
+
+        if global_input_img_disp_flag == True:
+            disp_img = np.concatenate((current_segmented_img, prev_segmented_img), axis=1)
+            disp_img = np.transpose(disp_img, (1, 2, 0))
+            disp_img = 255.0 * disp_img
+            disp_img = disp_img.astype(np.uint8)
+            disp_img = cv.resize(disp_img, dsize=(0, 0), fx=0.5, fy=0.5, interpolation=cv.INTER_LINEAR)
+            cv.imshow('[Up : current_segmented_img][Down : prev_segmented_img]', disp_img)
             cv.waitKey(30)
         ######################################################################################################
 
