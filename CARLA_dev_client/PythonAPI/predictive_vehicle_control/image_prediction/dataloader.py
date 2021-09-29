@@ -197,6 +197,10 @@ class carla_dataset(torch.utils.data.Dataset):
         vehicle_control_feature_vector = np.array([prev_Throttle, prev_Steer, normalized_prev_Speed, prev_Brake])
         vehicle_control_feature_vector.astype(np.float)
 
+        ### Predictive Vehicle Control Feature Vector Assembly ###
+        predictive_vehicle_control_feature_vector = np.array([current_Throttle, current_Steer])
+        predictive_vehicle_control_feature_vector.astype(np.float)
+
         global_print('prev_hud_data_dict keys : {}'.format(list(prev_hud_data_dict.keys())))
         global_print('prev_hud_data_dict : {}'.format(prev_hud_data_dict))
 
