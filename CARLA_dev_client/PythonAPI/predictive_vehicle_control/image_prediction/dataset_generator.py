@@ -163,6 +163,35 @@ class N_frame_delay_carla_dataset_generator():
 
         self.verbosity = verbose    # low, high
 
+        ### Exception Handling for Driving Scenario Jump ###################################################################
+        ### Data Timestamps for identifying Driving Scenario Jumps #########################################################
+        self.seq_jump_idx = ['19:13:13.616261_' + str(654).zfill(10), '19:13:13.616261_' + str(959).zfill(10), '19:13:13.616261_' + str(654).zfill(1721),
+                             '19:13:13.616261_' + str(2037).zfill(10), '19:13:13.616261_' + str(2103).zfill(10),
+
+                             '19:17:22.433945_' + str(1).zfill(10),
+
+                             '19:18:32.960168_' + str(1).zfill(10), '19:18:32.960168_' + str(369).zfill(10), '19:18:32.960168_' + str(1223).zfill(10),
+                             '19:18:32.960168_' + str(1670).zfill(10),
+                             
+                             '19:29:29.398738_' + str(1).zfill(10), '19:29:29.398738_' + str(852).zfill(10), '19:29:29.398738_' + str(999).zfill(10),
+                             '19:29:29.398738_' + str(1572).zfill(10), '19:29:29.398738_' + str(2158).zfill(10), '19:29:29.398738_' + str(2224).zfill(10),
+                             '19:29:29.398738_' + str(2550).zfill(10), '19:29:29.398738_' + str(2688).zfill(10), '19:29:29.398738_' + str(2795).zfill(10),
+                             '19:29:29.398738_' + str(3487).zfill(10), '19:29:29.398738_' + str(3947).zfill(10), '19:29:29.398738_' + str(4118).zfill(10),
+                             
+                             '19:38:15.339723_' + str(1).zfill(10), '19:38:15.339723_' + str(391).zfill(10), '19:38:15.339723_' + str(639).zfill(10),
+                             '19:38:15.339723_' + str(811).zfill(10), '19:38:15.339723_' + str(889).zfill(10), '19:38:15.339723_' + str(991).zfill(10),
+                             '19:38:15.339723_' + str(1084).zfill(10), '19:38:15.339723_' + str(1274).zfill(10),
+                             
+                             '19:45:42.153549_' + str(300).zfill(10), '19:45:42.153549_' + str(597).zfill(10),
+                             
+                             '19:54:34.722789_' + str(1059).zfill(10), '19:54:34.722789_' + str(1712).zfill(10), '19:54:34.722789_' + str(1784).zfill(10),
+                             '19:54:34.722789_' + str(3762).zfill(10), '19:54:34.722789_' + str(4442).zfill(10), '19:54:34.722789_' + str(5040).zfill(10),]
+        
+        exception_jump_skip_flag = False
+
+        skip_counter = 0
+        ####################################################################################################################
+
         ### Dataset HDF Preparation by Dataset Group Type ##################################################################
         main_file = h5py.File(self.dataset_save_path[:-5] + '[frame_delay_' + str(n_frame_delay) + ']' + '.hdf5', 'w')
 
@@ -218,6 +247,12 @@ class N_frame_delay_carla_dataset_generator():
 
             self.local_print('[{} dataset length : {}]'.format(group.attrs['type'], dataset_length), level='low')
 
+            ### Exception Handling for Driving Scenario Jump ###################################################################
+            # Reset flag variables for exception handling
+            exception_jump_skip_flag = False
+            skip_counter = 0
+            ####################################################################################################################
+
             for idx in tqdm(range(dataset_length)):
 
                 if idx < self.n_frame_delay:
@@ -234,31 +269,52 @@ class N_frame_delay_carla_dataset_generator():
                     self.local_print('current_segmented_img_dataset_path : {}'.format(segmented_img_dataset_path + '/' + segmented_img_name[idx]))
                     self.local_print('current_hud_data_dataset_path : {}'.format(hud_data_dataset_path + '/' + hud_data_name[idx]))
 
-                    prev_img_path_group.create_dataset(name=str(idx - self.n_frame_delay).zfill(10), 
-                                                    data=[img_dataset_path + '/' + img_name[idx - self.n_frame_delay]],
-                                                    compression='gzip', compression_opts=9)
 
-                    prev_segmented_img_path_group.create_dataset(name=str(idx - self.n_frame_delay).zfill(10), 
-                                                                data=[segmented_img_dataset_path + '/' + segmented_img_name[idx - self.n_frame_delay]],
-                                                                compression='gzip', compression_opts=9)
+                    ### Exception Handling for Driving Scenario Jump ###################################################################
+                    # Skip for N frame delay steps when encountered with Driving Scenario Jump timestamps ##############################
+                    for jump_skip_val in self.seq_jump_idx:
+                        if jump_skip_val in (img_dataset_path + '/' + img_name[idx]):
+                            self.local_print('[Skip] Scenario Jump Detected : {}'.format(jump_skip_val), level='low')
+                            exception_jump_skip_flag = True
 
-                    prev_hud_data_path_group.create_dataset(name=str(idx - self.n_frame_delay).zfill(10), 
-                                                            data=[hud_data_dataset_path + '/' + hud_data_name[idx - self.n_frame_delay]],
-                                                            compression='gzip', compression_opts=9)
+                    if skip_counter == (self.n_frame_delay + 1):
+                        self.local_print('[Skip_counter Reset]', level='low')
+                        exception_jump_skip_flag = False
+                        skip_counter = 0
 
-                    current_img_path_group.create_dataset(name=str(idx - self.n_frame_delay).zfill(10), 
-                                                        data=[img_dataset_path + '/' + img_name[idx]],
+                    if exception_jump_skip_flag == True:
+
+                            skip_counter += 1
+                    ####################################################################################################################
+
+                    elif exception_jump_skip_flag == False:
+                        prev_img_path_group.create_dataset(name=str(data_idx).zfill(10), 
+                                                        data=[img_dataset_path + '/' + img_name[idx - self.n_frame_delay]],
                                                         compression='gzip', compression_opts=9)
 
-                    current_segmented_img_path_group.create_dataset(name=str(idx - self.n_frame_delay).zfill(10), 
-                                                                    data=[segmented_img_dataset_path + '/' + segmented_img_name[idx]],
+                        prev_segmented_img_path_group.create_dataset(name=str(data_idx).zfill(10), 
+                                                                    data=[segmented_img_dataset_path + '/' + segmented_img_name[idx - self.n_frame_delay]],
                                                                     compression='gzip', compression_opts=9)
-                                                        
-                    current_hud_data_path_group.create_dataset(name=str(idx - self.n_frame_delay).zfill(10), 
-                                                            data=[hud_data_dataset_path + '/' + hud_data_name[idx]],
+
+                        prev_hud_data_path_group.create_dataset(name=str(data_idx).zfill(10), 
+                                                                data=[hud_data_dataset_path + '/' + hud_data_name[idx - self.n_frame_delay]],
+                                                                compression='gzip', compression_opts=9)
+
+                        current_img_path_group.create_dataset(name=str(data_idx).zfill(10), 
+                                                            data=[img_dataset_path + '/' + img_name[idx]],
                                                             compression='gzip', compression_opts=9)
 
-                    self.local_print('----------------------------------------------------')
+                        current_segmented_img_path_group.create_dataset(name=str(data_idx).zfill(10), 
+                                                                        data=[segmented_img_dataset_path + '/' + segmented_img_name[idx]],
+                                                                        compression='gzip', compression_opts=9)
+                                                            
+                        current_hud_data_path_group.create_dataset(name=str(data_idx).zfill(10), 
+                                                                data=[hud_data_dataset_path + '/' + hud_data_name[idx]],
+                                                                compression='gzip', compression_opts=9)
+
+                        data_idx += 1
+
+                        self.local_print('----------------------------------------------------')
 
     def local_print(self, sen, level='high'):
 
