@@ -145,3 +145,126 @@ class carla_dataset_generator():
         elif self.verbosity == 'low':
             if level == 'low':
                 print(sen)
+
+class N_frame_delay_carla_dataset_generator():
+
+    def __init__(self, dataset_save_path='',
+                       dataset_path='', 
+                       n_frame_delay=1,
+                       verbose='low'):
+
+        self.dataset_save_path = dataset_save_path
+
+        self.training_dataset_path = dataset_path + '/training'
+        self.validation_dataset_path = dataset_path + '/validation'
+        self.test_dataset_path = dataset_path + '/test'
+
+        self.n_frame_delay = n_frame_delay
+
+        self.verbosity = verbose    # low, high
+
+        ### Dataset HDF Preparation by Dataset Group Type ##################################################################
+        main_file = h5py.File(self.dataset_save_path[:-5] + '[frame_delay_' + str(n_frame_delay) + ']' + '.hdf5', 'w')
+
+        train_group = main_file.create_group('training_group')
+        train_group.attrs['type'] = 'training'
+        train_group.attrs['n_frame_delay'] = 'n_frame_delay'
+        train_group.attrs['path'] = self.training_dataset_path
+
+        valid_group = main_file.create_group('validation_group')
+        valid_group.attrs['type'] = 'validation'
+        valid_group.attrs['n_frame_delay'] = 'n_frame_delay'
+        valid_group.attrs['path'] = self.validation_dataset_path
+
+        test_group = main_file.create_group('test_group')
+        test_group.attrs['type'] = 'test'
+        test_group.attrs['n_frame_delay'] = 'n_frame_delay'
+        test_group.attrs['path'] = self.test_dataset_path
+        ####################################################################################################################
+
+        self.pose_standardization_list = []
+
+        for group in [train_group, valid_group, test_group]:
+
+            prev_img_path_group = main_file.create_group(group.name + '/prev_img_path')
+            prev_segmented_img_path_group = main_file.create_group(group.name + '/prev_segmented_img_path')
+            prev_hud_data_path_group = main_file.create_group(group.name + '/prev_hud_data_path')
+
+            current_img_path_group = main_file.create_group(group.name + '/current_img_path')
+            current_segmented_img_path_group = main_file.create_group(group.name + '/current_segmented_img_path')
+            current_hud_data_path_group = main_file.create_group(group.name + '/current_hud_data_path')
+
+            data_idx = 0
+
+            self.local_print(group.attrs['type'])
+            self.local_print(group.attrs['path'])
+
+            img_dataset_path = group.attrs['path'] + '/current_img'
+            segmented_img_dataset_path = group.attrs['path'] + '/current_segmented_img'
+            hud_data_dataset_path = group.attrs['path'] + '/current_hud_data'
+
+            img_name = sorted(os.listdir(img_dataset_path))
+            segmented_img_name = sorted(os.listdir(segmented_img_dataset_path))
+            hud_data_name = sorted(os.listdir(hud_data_dataset_path))
+
+            self.local_print(img_dataset_path)
+            self.local_print(segmented_img_dataset_path)
+            self.local_print(hud_data_dataset_path)
+            self.local_print(len(img_name))
+            self.local_print(len(segmented_img_name))
+            self.local_print(len(hud_data_name))
+            
+            dataset_length = len(img_name)
+
+            self.local_print('[{} dataset length : {}]'.format(group.attrs['type'], dataset_length), level='low')
+
+            for idx in tqdm(range(dataset_length)):
+
+                if idx < self.n_frame_delay:
+                    self.local_print('\n[Skip][Seq {} - idx {}] Current idx lower than n_frame_delay'.format(group.attrs['n_frame_delay'], idx), level='low')
+                    pass
+
+                else:
+
+                    self.local_print('prev_img_dataset_path : {}'.format(img_dataset_path + '/' + img_name[idx - self.n_frame_delay]))
+                    self.local_print('prev_segmented_img_dataset_path : {}'.format(segmented_img_dataset_path + '/' + segmented_img_name[idx - self.n_frame_delay]))
+                    self.local_print('prev_hud_data_dataset_path : {}'.format(hud_data_dataset_path + '/' + hud_data_name[idx - self.n_frame_delay]))
+
+                    self.local_print('current_img_dataset_path : {}'.format(img_dataset_path + '/' + img_name[idx]))
+                    self.local_print('current_segmented_img_dataset_path : {}'.format(segmented_img_dataset_path + '/' + segmented_img_name[idx]))
+                    self.local_print('current_hud_data_dataset_path : {}'.format(hud_data_dataset_path + '/' + hud_data_name[idx]))
+
+                    prev_img_path_group.create_dataset(name=str(idx - self.n_frame_delay).zfill(10), 
+                                                    data=[img_dataset_path + '/' + img_name[idx - self.n_frame_delay]],
+                                                    compression='gzip', compression_opts=9)
+
+                    prev_segmented_img_path_group.create_dataset(name=str(idx - self.n_frame_delay).zfill(10), 
+                                                                data=[segmented_img_dataset_path + '/' + segmented_img_name[idx - self.n_frame_delay]],
+                                                                compression='gzip', compression_opts=9)
+
+                    prev_hud_data_path_group.create_dataset(name=str(idx - self.n_frame_delay).zfill(10), 
+                                                            data=[hud_data_dataset_path + '/' + hud_data_name[idx - self.n_frame_delay]],
+                                                            compression='gzip', compression_opts=9)
+
+                    current_img_path_group.create_dataset(name=str(idx - self.n_frame_delay).zfill(10), 
+                                                        data=[img_dataset_path + '/' + img_name[idx]],
+                                                        compression='gzip', compression_opts=9)
+
+                    current_segmented_img_path_group.create_dataset(name=str(idx - self.n_frame_delay).zfill(10), 
+                                                                    data=[segmented_img_dataset_path + '/' + segmented_img_name[idx]],
+                                                                    compression='gzip', compression_opts=9)
+                                                        
+                    current_hud_data_path_group.create_dataset(name=str(idx - self.n_frame_delay).zfill(10), 
+                                                            data=[hud_data_dataset_path + '/' + hud_data_name[idx]],
+                                                            compression='gzip', compression_opts=9)
+
+                    self.local_print('----------------------------------------------------')
+
+    def local_print(self, sen, level='high'):
+
+        if self.verbosity == 'high':
+            print(sen)
+
+        elif self.verbosity == 'low':
+            if level == 'low':
+                print(sen)
