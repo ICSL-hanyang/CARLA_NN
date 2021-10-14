@@ -1197,7 +1197,7 @@ def record_data(collection_mode,
         current_segmented_img_array = current_segmented_img_array[:, :, :3]
         current_segmented_img_array = current_segmented_img_array[:, :, ::-1]
 
-        cv.imwrite('./Recorded_Image/{}/{}/current_segmented_img/{}_{}_t0_{}.jpeg'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), current_segmented_img.timestamp), current_segmented_img_array)
+        cv.imwrite('./Recorded_Image/{}/{}/current_segmented_img/{}_{}_t1_{}.jpeg'.format(record_time, collection_mode, record_time, str(recording_frame_num).zfill(10), current_segmented_img.timestamp), current_segmented_img_array)
 
     else: print('[Error] current_segmented_img Omitted')
 
