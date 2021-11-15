@@ -2,6 +2,10 @@
 
 Deep Neural Network-based Autonomous Driving Resarch using CARLA.
 
+# Next Lane Image Prediction using CNN-based U-Net
+
+![image](https://user-images.githubusercontent.com/10843389/139206038-cbad48c1-0eb1-4081-abf2-a360b4669ef3.png)
+
 # Environment Setup Procedure
 
 0. Pre-requisites
