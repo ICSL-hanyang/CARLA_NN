@@ -35,6 +35,8 @@ class carla_dataset_generator():
 
         self.verbosity = verbose    # low, high
 
+        self.mean_timestamp_difference_length = 0   # Timestamp difference between current and next lane image from Training Dataset
+
         ### Dataset HDF Preparation by Dataset Group Type ##################################################################
         main_file = h5py.File(self.dataset_save_path, 'w')
 
@@ -64,6 +66,8 @@ class carla_dataset_generator():
             current_hud_data_path_group = main_file.create_group(group.name + '/current_hud_data_path')
 
             data_idx = 0
+
+            timestamp_difference_length_list = []
 
             self.local_print(group.attrs['type'])
             self.local_print(group.attrs['path'])
@@ -111,6 +115,24 @@ class carla_dataset_generator():
                 self.local_print(current_segmented_img_dataset_path + '/' + current_segmented_img_name[idx])
                 self.local_print(current_hud_data_dataset_path + '/' + current_hud_data_name[idx])
 
+                if group.attrs['type'] == 'training':
+                    prev_time_val_idx0 = prev_img_name[idx].find('t0_') + 3
+                    prev_time_val_idx1 = prev_img_name[idx].find('.jpeg')
+                    prev_time_val = float(prev_img_name[idx][prev_time_val_idx0 : prev_time_val_idx1])
+                    self.local_print('Prev Timestamp : {}'.format(prev_time_val))
+
+                    current_time_val_idx0 = current_img_name[idx].find('t1_') + 3
+                    current_time_val_idx1 = current_img_name[idx].find('.jpeg')
+                    current_time_val = float(current_img_name[idx][current_time_val_idx0 : current_time_val_idx1])
+                    self.local_print('Current Timestamp : {}'.format(current_time_val))
+
+                    timestamp_difference_length = current_time_val - prev_time_val
+                    self.local_print('Timestamp Difference Length : {} sec'.format(timestamp_difference_length))
+
+                    timestamp_difference_length_list.append(timestamp_difference_length)
+
+                self.local_print('----------------------------------------------------')
+
                 prev_img_path_group.create_dataset(name=str(idx).zfill(10), 
                                                    data=[prev_img_dataset_path + '/' + prev_img_name[idx]],
                                                    compression='gzip', compression_opts=9)
@@ -134,6 +156,10 @@ class carla_dataset_generator():
                 current_hud_data_path_group.create_dataset(name=str(idx).zfill(10), 
                                                            data=[current_hud_data_dataset_path + '/' + current_hud_data_name[idx]],
                                                            compression='gzip', compression_opts=9)
+
+            if group.attrs['type'] == 'training':
+                self.mean_timestamp_difference_length = np.mean(timestamp_difference_length_list)
+                print('mean_timestamp_difference_length : {} sec'.format(self.mean_timestamp_difference_length, level='low'))
 
             self.local_print('----------------------------------------------------')
 
@@ -225,6 +251,8 @@ class N_frame_delay_carla_dataset_generator():
 
             data_idx = 0
 
+            timestamp_difference_length_list = []
+
             self.local_print(group.attrs['type'])
             self.local_print(group.attrs['path'])
 
@@ -288,6 +316,24 @@ class N_frame_delay_carla_dataset_generator():
                     ####################################################################################################################
 
                     elif exception_jump_skip_flag == False:
+
+                        if group.attrs['type'] == 'training':
+
+                            prev_time_val_idx0 = img_name[idx - self.n_frame_delay].find('t1_') + 3
+                            prev_time_val_idx1 = img_name[idx - self.n_frame_delay].find('.jpeg')
+                            prev_time_val = float(img_name[idx - self.n_frame_delay][prev_time_val_idx0 : prev_time_val_idx1])
+                            self.local_print('Prev Timestamp : {}'.format(prev_time_val))
+
+                            current_time_val_idx0 = img_name[idx].find('t1_') + 3
+                            current_time_val_idx1 = img_name[idx].find('.jpeg')
+                            current_time_val = float(img_name[idx][current_time_val_idx0 : current_time_val_idx1])
+                            self.local_print('Current Timestamp : {}'.format(current_time_val))
+
+                            timestamp_difference_length = current_time_val - prev_time_val
+                            self.local_print('Timestamp Difference Length : {} sec'.format(timestamp_difference_length))
+
+                            timestamp_difference_length_list.append(timestamp_difference_length)
+                            
                         prev_img_path_group.create_dataset(name=str(data_idx).zfill(10), 
                                                         data=[img_dataset_path + '/' + img_name[idx - self.n_frame_delay]],
                                                         compression='gzip', compression_opts=9)
@@ -315,6 +361,11 @@ class N_frame_delay_carla_dataset_generator():
                         data_idx += 1
 
                         self.local_print('----------------------------------------------------')
+
+            if group.attrs['type'] == 'training':
+                self.mean_timestamp_difference_length = np.mean(timestamp_difference_length_list)
+                print('mean_timestamp_difference_length : {} sec'.format(self.mean_timestamp_difference_length, level='low'))
+
 
     def local_print(self, sen, level='high'):
 
