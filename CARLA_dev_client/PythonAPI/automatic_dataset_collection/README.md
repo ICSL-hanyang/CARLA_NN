@@ -17,7 +17,7 @@ Ubuntu 18.04
 
 [CARLA Simulator](https://carla.org/) (0.9.12)
 
-[OpenCV-Python](https://docs.opencv.org/4.5.3/d6/d00/tutorial_py_root.html) (Higher than 4.5.3)
+[OpenCV-Python](https://docs.opencv.org/4.5.3/) (Higher than 4.5.3)
 
 [pygame](https://www.pygame.org/news)
 
